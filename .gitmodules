@@ -1,0 +1,6 @@
+[submodule "Vendor/vk-bootstrap"]
+	path = Vendor/vk-bootstrap
+	url = https://github.com/charles-lunarg/vk-bootstrap.git
+[submodule "Vendor/VulkanMemoryAllocator"]
+	path = Vendor/VulkanMemoryAllocator
+	url = https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git

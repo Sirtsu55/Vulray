@@ -183,7 +183,7 @@ namespace vr
         auto maxInstances = tlas.InstanceBuffer.Size / sizeof(vk::AccelerationStructureInstanceKHR);
         if(offset + instanceCount > maxInstances)
         {
-            VULRAY_LOG_RED("Instance Update Failed: Instance Count + Offset > TLAS max instances, please make new TLAS with greater maxInstance");
+            VULRAY_LOG_ERROR("Instance Update Failed: Instance Count + Offset > TLAS max instances, please make new TLAS with greater maxInstance");
             return;
         }
         

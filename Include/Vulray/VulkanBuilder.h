@@ -81,6 +81,8 @@ namespace vr
 		//Raytracing extensions are added automatically, no need to add them
 		std::vector<const char*> DeviceExtensions;
 		
+		//set nullptr to use default Vulray callback
+		PFN_vkDebugUtilsMessengerCallbackEXT DebugCallback = nullptr;
 
 	private:
 		std::shared_ptr<void> _StructData = nullptr;

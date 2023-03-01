@@ -65,7 +65,7 @@ namespace vr
             //check if both shaders are null
             if(!hg.ClosestHitShader.Module && !hg.AnyHitShader.Module)
             {
-                VULRAY_LOG_RED("CreateRayTracingPipeline: Hit group must have at least one shader");
+                VULRAY_LOG_ERROR("CreateRayTracingPipeline: Hit group must have at least one shader");
             }
 
 
@@ -131,7 +131,7 @@ namespace vr
 
         if(pipeline.result != vk::Result::eSuccess)
         {
-            VULRAY_LOG_RED("CreateRayTracingPipeline: Failed to create ray tracing pipeline");    
+            VULRAY_LOG_ERROR("CreateRayTracingPipeline: Failed to create ray tracing pipeline");    
             pipeline.value = nullptr;
         }
         
@@ -164,12 +164,12 @@ static void ErrorCheckShader(const char *shaderName, const vr::Shader &sdr, vk::
     //check is module is valid
     if(!sdr.Module)
     {
-        VULRAY_LOG_RED( shaderName << " module is invalid!");
+        VULRAY_LOG_ERROR("{0} module is invalid!", shaderName);
         return;
     }
     if(sdr.Stage != state)
     {
-        VULRAY_LOG_RED( shaderName << " Stage is not " << vk::to_string(state) << "!");
+        VULRAY_LOG_ERROR("{0} Stage is not {1}!", shaderName, vk::to_string(state));
     }
   
 

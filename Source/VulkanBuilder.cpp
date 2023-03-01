@@ -47,7 +47,7 @@ namespace vr
     InstanceWrapper VulkanBuilder::CreateInstance()
 	{
         auto instBuilder = vkb::InstanceBuilder()
-            .set_debug_callback(VulrayVulkanDebugCback)
+            .set_debug_callback(DebugCallback == nullptr ? VulrayVulkanDebugCback : DebugCallback)
             .require_api_version(1, 2, 0);
 
         
@@ -76,7 +76,7 @@ namespace vr
         auto instanceResult = instBuilder.build();
         if (!instanceResult.has_value())
         {
-            VULRAY_LOG_RED("Instance Build failed, Error: " << instanceResult.error().message());
+            VULRAY_LOG_ERROR("Instance Build failed, Error: {0}", instanceResult.error().message());
             throw std::runtime_error("No Instance Created");
             return {};
         }
@@ -134,7 +134,7 @@ namespace vr
         auto physResult = physSelector.select();
         if (!physResult.has_value())
         {
-            VULRAY_LOG_RED("Physical Device Build failed, Error: " << physResult.error().message());
+            VULRAY_LOG_ERROR("Physical Device Build failed, Error: {0}", physResult.error().message());
             throw std::runtime_error("Physical Device Build failed");
             return {};
         }
@@ -155,7 +155,7 @@ namespace vr
         
         if (!devResult.has_value())
         {
-            VULRAY_LOG_RED("Logical Device Build failed, Error: " << devResult.error().message());
+            VULRAY_LOG_ERROR("Logical Device Build failed, Error: {0}", devResult.error().message());
             throw std::runtime_error("No Logical Devices Created");
             return {};
         }
@@ -184,23 +184,23 @@ namespace vr
 
         if(!gQ.has_value())
         {
-            VULRAY_LOG_RED("Device doesn't have a Graphics Queue, Error: " << gQ.error().message());
+            VULRAY_LOG_ERROR("Device doesn't have a Graphics Queue, Error: {0}", gQ.error().message());
             return {};
         }
         if(!cQ.has_value())
         {
             qValid = true;
-            VULRAY_LOG_RED("Device doesn't have a Compute Queue, Error: " << cQ.error().message());
+            VULRAY_LOG_ERROR("Device doesn't have a Compute Queue, Error: {0}", cQ.error().message());
         }
         if(!tQ.has_value())
         {
             qValid = false;
-            VULRAY_LOG_RED("Device doesn't have a Transfer Queue, Error: " << tQ.error().message());
+            VULRAY_LOG_ERROR("Device doesn't have a Transfer Queue, Error: {0}", tQ.error().message());
         }
         if(!pQ.has_value())
         {
             qValid = false;
-            VULRAY_LOG_RED("Device doesn't have a Present Queue, Error: " << pQ.error().message());
+            VULRAY_LOG_ERROR("Device doesn't have a Present Queue, Error: {0}", pQ.error().message());
         }
         if(!qValid)
             throw std::runtime_error("Device doesn't have the required queues");
@@ -227,7 +227,7 @@ namespace vr
             instance.destroy();
             return;
         }
-        VULRAY_LOG_YELLOW("Called Instance::DestroyInstance with invalid vk::Instance");
+        VULRAY_LOG_WARNING("Called Instance::DestroyInstance with invalid vk::Instance");
     }
     void InstanceWrapper::DestroyInstance(InstanceWrapper instance)
     {
@@ -280,9 +280,9 @@ namespace vr
 
 
         if(compatibleFormat.format != DesiredFormat)
-            VULRAY_LOG_RED("Desired Format is not available, Fallback is vk::Format::eB8G8R8A8Srgb");
+            VULRAY_LOG_ERROR("Desired Format is not available, Fallback is vk::Format::eB8G8R8A8Srgb");
         if(compatibleFormat.colorSpace != ColorSpace)
-            VULRAY_LOG_RED("Desired ColorSpace is not available, Using: " << std::hex << (uint32_t)(compatibleFormat.colorSpace));
+            VULRAY_LOG_ERROR("Desired ColorSpace is not available, Using: {0}", vk::to_string(compatibleFormat.colorSpace));
         
         vkb::SwapchainBuilder* swapBuilder = nullptr;
         
@@ -314,7 +314,7 @@ namespace vr
         auto buildResult = swapBuilder->build();
         if (!buildResult.has_value())
         {
-            VULRAY_LOG_RED("Swapchain Build failed, Error: " << buildResult.error().message());
+            VULRAY_LOG_ERROR("Swapchain Build failed, Error: {0}", buildResult.error().message());
             throw std::runtime_error("Swapchain Build failed");
             return {};
         }
@@ -325,9 +325,9 @@ namespace vr
         auto swapImages = swapchain.get_images();
 
         if(!swapImages.has_value())
-            VULRAY_LOG_RED("Swapchain Images Error: " << swapImages.error().message());
+            VULRAY_LOG_ERROR("Swapchain Images Error: {0}",swapImages.error().message());
         if(!swapImageViews.has_value())
-            VULRAY_LOG_RED("Swapchain Image Views Error: " << swapImageViews.error().message());
+            VULRAY_LOG_ERROR("Swapchain Image Views Error: {0}", swapImageViews.error().message());
 
         auto images = *reinterpret_cast<std::vector<vk::Image>*>(&swapImages.value());
         auto imageviews = *reinterpret_cast<std::vector<vk::ImageView>*>(&swapImageViews.value());
@@ -356,16 +356,16 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL VulrayVulkanDebugCback(
     switch (messageSeverity)
     {
     case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
-        VULRAY_LOG_GRAY(msgHead << msgType << "][" << msgSeverity << "]: " <<pCallbackData->pMessage);
+        VULRAY_LOG_VERBOSE("[Vulkan][{0}][{1}]: {2}", msgType, msgSeverity, pCallbackData->pMessage);
         break;
     case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
-        VULRAY_LOG_WHITE(msgHead << msgType << "][" << msgSeverity << "]: " <<pCallbackData->pMessage);
+        VULRAY_LOG_INFO("[Vulkan][{0}][{1}]: {2}", msgType, msgSeverity, pCallbackData->pMessage);
         break;
     case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
-        VULRAY_LOG_YELLOW(msgHead << msgType << "][" << msgSeverity << "]: " <<pCallbackData->pMessage);
+        VULRAY_LOG_WARNING("[Vulkan][{0}][{1}]: {2}", msgType, msgSeverity, pCallbackData->pMessage);
         break;
     case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
-        VULRAY_LOG_RED(msgHead << msgType << "][" << msgSeverity << "]: " <<pCallbackData->pMessage);
+        VULRAY_LOG_ERROR("[Vulkan][{0}][{1}]: {2}", msgType, msgSeverity, pCallbackData->pMessage);
         break;
     }
 

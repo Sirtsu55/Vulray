@@ -7,7 +7,7 @@ namespace vr
         Shader outShader = {};
         if(info.SPIRVCode.empty())
         {
-            VULRAY_LOG_RED("ShaderCreateInfo must have SPIRV code");
+            VULRAY_LOG_ERROR("ShaderCreateInfo must have SPIRV code");
             return outShader; // return empty shader, because no shader was created
         }
 

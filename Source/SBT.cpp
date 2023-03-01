@@ -13,7 +13,7 @@ namespace vr
         auto result = mDevice.getRayTracingShaderGroupHandlesKHR(pipeline, firstGroup, groupCount, size, handles.data(), mDynLoader);
         if(result != vk::Result::eSuccess)
         {
-            VULRAY_LOG_RED("GetHandlesForSBTBuffer: Failed to get ray tracing shader group handles");
+            VULRAY_LOG_ERROR("GetHandlesForSBTBuffer: Failed to get ray tracing shader group handles");
         }
         return handles;
     }
@@ -32,7 +32,7 @@ namespace vr
         }
         if(!buffer)
         {
-            VULRAY_LOG_RED("WriteToSBT: Invalid shader group");
+            VULRAY_LOG_ERROR("WriteToSBT: Invalid shader group");
             return;
         }
 
@@ -42,7 +42,7 @@ namespace vr
         //make sure the data size is not too large
         if(offset + dataSize > addressRegion->size)
         {
-            VULRAY_LOG_RED("WriteToSBT: Data size is too large for shader group");
+            VULRAY_LOG_ERROR("WriteToSBT: Data size is too large for shader group");
             return;
         }
 

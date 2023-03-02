@@ -15,7 +15,15 @@ namespace vr
         ~VulrayDevice();
 
 
-        vk::Device Device() const { return mDevice; }
+        vk::Device GetDevice() const { return mDevice; }
+
+        vk::PhysicalDevice GetPhysicalDevice() const { return mPhysicalDevice; }
+
+        vk::Instance GetInstance() const { return mInstance; }
+
+        vk::PhysicalDeviceRayTracingPipelinePropertiesKHR GetRayTracingProperties() const { return mRayTracingProperties; }
+
+        vk::PhysicalDeviceAccelerationStructurePropertiesKHR GetAccelerationStructureFeatures() const { return mAccelProperties; }
 
         //--------------------------------------------------------------------------------
         // Command Buffer functions
@@ -58,6 +66,9 @@ namespace vr
         
         //records commands to build one TLAS
         void BuildTLAS(TLASHandle& accel, TLASCreateInfo& info, vk::CommandBuffer cmdBuf);
+
+        //Adds barrier to the command buffer to ensure the acceleration structure is built before other acceleration structures are built
+        void AddAccelerationBuildBarrier(vk::CommandBuffer cmdBuf);
 
         //-----------------------Acceleration Destruction---------------------------------
 
@@ -130,7 +141,7 @@ namespace vr
 
         [[nodiscard]] vk::PipelineLayout CreatePipelineLayout(const std::vector<vk::DescriptorSetLayout>& descLayouts);
 
-        [[nodiscard]] vk::Pipeline CreateRayTracingPipeline(vk::PipelineLayout layout, const ShaderBindingTable& info);
+        [[nodiscard]] vk::Pipeline CreateRayTracingPipeline(vk::PipelineLayout layout, const ShaderBindingTable& info, uint32_t recursuionDepth);
 
         //--------------------------------------------------------------------------------
         //Descriptor functions

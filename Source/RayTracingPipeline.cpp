@@ -8,7 +8,7 @@ static void ErrorCheckShader(const char* shaderName, const vr::Shader& sdr, vk::
 namespace vr
 {
 
-    vk::Pipeline VulrayDevice::CreateRayTracingPipeline(vk::PipelineLayout layout, const ShaderBindingTable &info)
+    vk::Pipeline VulrayDevice::CreateRayTracingPipeline(vk::PipelineLayout layout, const ShaderBindingTable &info, uint32_t recursuionDepth)
     {
         std::vector<vk::PipelineShaderStageCreateInfo> shaderStages;
         std::vector<vk::RayTracingShaderGroupCreateInfoKHR> shaderGroups;
@@ -118,13 +118,19 @@ namespace vr
                 .setIntersectionShader(VK_SHADER_UNUSED_KHR));
         }
 
+        if(recursuionDepth >= mRayTracingProperties.maxRayRecursionDepth)
+        {
+            VULRAY_LOG_WARNING("CreateRayTracingPipeline: Recursion Depth is greater than max ray recursion depth");
+            recursuionDepth = mRayTracingProperties.maxRayRecursionDepth;
+        }
+
         //Create pipeline
         auto pipelineInf = vk::RayTracingPipelineCreateInfoKHR()
             .setStageCount(static_cast<uint32_t>(shaderStages.size()))
             .setPStages(shaderStages.data())
             .setGroupCount(static_cast<uint32_t>(shaderGroups.size()))
             .setPGroups(shaderGroups.data())
-            .setMaxPipelineRayRecursionDepth(3) //TODO: make this a parameter
+            .setMaxPipelineRayRecursionDepth(recursuionDepth) 
             .setLayout(layout);
 
         auto pipeline = mDevice.createRayTracingPipelineKHR(nullptr, nullptr, pipelineInf, nullptr, mDynLoader);

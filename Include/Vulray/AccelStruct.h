@@ -34,8 +34,6 @@ namespace vr
     {
         vk::BuildAccelerationStructureFlagBitsKHR Flags = vk::BuildAccelerationStructureFlagBitsKHR::ePreferFastTrace;
         std::vector<vk::AccelerationStructureGeometryKHR> Geometries;
-        AllocatedBuffer VertexBuffer;
-        AllocatedBuffer IndexBuffer;
     };
 
     struct GeometryData

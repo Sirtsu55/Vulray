@@ -16,20 +16,20 @@ namespace vr
             .setPNext(nullptr);
             
 
-        uint32_t maxPrimitiveCount = 0;
+        std::vector<uint32_t> maxPrimitiveCount(info.Geometries.size());
 
-        for (auto& geom : info.Geometries)
-            maxPrimitiveCount += geom.geometry.triangles.maxVertex;
+        for (uint32_t i = 0; i < info.Geometries.size(); i++)
+            maxPrimitiveCount[i] = info.Geometries[i].geometry.triangles.maxVertex;
 
         BLASHandle outAccel;
 
         auto buildSizes = vk::AccelerationStructureBuildSizesInfoKHR();
 
-        mDevice.getAccelerationStructureBuildSizesKHR(vk::AccelerationStructureBuildTypeKHR::eDevice, &buildInfo, &maxPrimitiveCount, &buildSizes, mDynLoader);
+        mDevice.getAccelerationStructureBuildSizesKHR(vk::AccelerationStructureBuildTypeKHR::eDevice, &buildInfo, maxPrimitiveCount.data(), &buildSizes, mDynLoader);
 
         outAccel.pScratchBuffer = new AllocatedBuffer();
 
-        //Create scratch buffer
+        //Create scratch buffer, we create unique scratch buffers for each BLAS to allow for parallel builds
         *outAccel.pScratchBuffer = CreateBuffer(buildSizes.buildScratchSize,
             VmaMemoryUsage::VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
             vk::BufferUsageFlagBits::eStorageBuffer,
@@ -170,12 +170,21 @@ namespace vr
         accel.GeomBuildInfo.dstAccelerationStructure = accel.AccelStruct;
         accel.GeomBuildInfo.scratchData = accel.ScratchBuffer.DevAddress;
         cmdBuf.buildAccelerationStructuresKHR(1, &accel.GeomBuildInfo, &pBuildRange, mDynLoader);
+
+    }
+
+    void VulrayDevice::AddAccelerationBuildBarrier(vk::CommandBuffer cmdBuf)
+    {
         //accel build barrier for for next build
+        auto barrier = vk::MemoryBarrier()
+            .setSrcAccessMask(vk::AccessFlagBits::eAccelerationStructureWriteKHR)
+            .setDstAccessMask(vk::AccessFlagBits::eAccelerationStructureReadKHR);
+        
         cmdBuf.pipelineBarrier(
             vk::PipelineStageFlagBits::eAccelerationStructureBuildKHR,
             vk::PipelineStageFlagBits::eAccelerationStructureBuildKHR, 
             (vk::DependencyFlagBits)0,
-            0, nullptr, 0, nullptr, 0, nullptr);
+            1, &barrier, 0, nullptr, 0, nullptr);
     }
     
     void VulrayDevice::UpdateTLASInstances(const TLASHandle& tlas, void* instances, uint32_t instanceCount, uint32_t offset)
@@ -219,13 +228,6 @@ namespace vr
 
 
         cmdBuf.buildAccelerationStructuresKHR(buildInfos, pBuildRange, mDynLoader);
-        //accel build barrier for for next build
-        cmdBuf.pipelineBarrier(
-            vk::PipelineStageFlagBits::eAccelerationStructureBuildKHR,
-            vk::PipelineStageFlagBits::eAccelerationStructureBuildKHR, 
-            (vk::DependencyFlagBits)0,
-            0, nullptr, 0, nullptr, 0, nullptr);
-        
 
     }
 
@@ -249,12 +251,6 @@ namespace vr
 
 
         cmdBuf.buildAccelerationStructuresKHR(1, &accel.GeomBuildInfo, &pBuildRange, mDynLoader);
-        //accel build barrier for for next build
-        cmdBuf.pipelineBarrier(
-            vk::PipelineStageFlagBits::eAccelerationStructureBuildKHR,
-            vk::PipelineStageFlagBits::eAccelerationStructureBuildKHR, 
-            (vk::DependencyFlagBits)0,
-            0, nullptr, 0, nullptr, 0, nullptr);
 
     }
 

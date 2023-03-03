@@ -104,22 +104,22 @@ namespace vr
         outSBT.RayGenRegion = vk::StridedDeviceAddressRegionKHR()
             .setDeviceAddress(outSBT.RayGenBuffer.DevAddress)
             .setStride(rgenSize)
-            .setSize(outSBT.RayGenBuffer.Size); // only one ray gen shader
+            .setSize(rgenSize); // only one ray gen shader
         if(sbt.MissShaders.size() > 0)
             outSBT.MissRegion = vk::StridedDeviceAddressRegionKHR()
                 .setDeviceAddress(outSBT.MissBuffer.DevAddress) // only one ray gen shader
                 .setStride(missSize)
-                .setSize(outSBT.MissBuffer.Size);
+                .setSize(missSize * sbt.MissShaders.size());
         if(sbt.HitGroups.size() > 0)
             outSBT.HitGroupRegion = vk::StridedDeviceAddressRegionKHR()
                 .setDeviceAddress(outSBT.HitGroupBuffer.DevAddress)
                 .setStride(hitSize)
-                .setSize(outSBT.HitGroupBuffer.Size);
+                .setSize(hitSize * sbt.HitGroups.size());
         if(sbt.CallableShaders.size() > 0)
             outSBT.CallableRegion = vk::StridedDeviceAddressRegionKHR()
                 .setDeviceAddress(outSBT.CallableBuffer.DevAddress)
                 .setStride(callSize)
-                .setSize(outSBT.CallableBuffer.Size);
+                .setSize(callSize * sbt.CallableShaders.size());
 
 
         uint32_t dataOffset = 0; //offset into the SBT buffer

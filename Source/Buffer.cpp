@@ -42,8 +42,8 @@ namespace vr
         if(alignment)
         {
             result = (vk::Result)vmaCreateBufferWithAlignment(mVMAllocator,
-                (VkBufferCreateInfo*)&bufInfo, &allocInf,                   // type punning
-                mAccelProperties.minAccelerationStructureScratchOffsetAlignment,
+                (VkBufferCreateInfo*)&bufInfo, &allocInf,                 // type punning
+                alignment,
                 (VkBuffer*)&outBuffer.Buffer, &outBuffer.Allocation, nullptr);
         }
         else
@@ -59,7 +59,6 @@ namespace vr
         }
 
         outBuffer.DevAddress = mDevice.getBufferAddress(vk::BufferDeviceAddressInfo().setBuffer(outBuffer.Buffer));
-        outBuffer.Size = size;
         return outBuffer;
     }
 

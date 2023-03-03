@@ -8,8 +8,8 @@ namespace vr
         VmaAllocation Allocation = nullptr;
         vk::Buffer Buffer = nullptr;
         vk::DeviceAddress DevAddress = 0;
-        uint64_t Size = 0;
 
+        uint64_t Size() const;
     };
 
     struct ImageAllocation

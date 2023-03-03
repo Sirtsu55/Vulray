@@ -49,4 +49,11 @@ namespace vr
     {
         return mDevice.allocateCommandBuffers(vk::CommandBufferAllocateInfo(pool, level, count));
     }
+
+
+    //only place where it compiles is this file so its here now
+    uint64_t AllocatedBuffer::Size() const
+    {
+        return Allocation->GetSize();
+    }
 }

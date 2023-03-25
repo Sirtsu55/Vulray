@@ -87,7 +87,7 @@ namespace vr
     }
 
 
-    AllocatedBuffer VulrayDevice::BuildBLAS(std::vector<BLASBuildInfo> &buildInfos, vk::CommandBuffer cmdBuf)
+    AllocatedBuffer VulrayDevice::BuildBLAS(std::vector<BLASBuildInfo> &buildInfos, vk::CommandBuffer cmdBuf, const AllocatedBuffer* scratch)
     {
         std::vector<vk::AccelerationStructureBuildRangeInfoKHR*> pBuildRangeInfos;
         std::vector<vk::AccelerationStructureBuildGeometryInfoKHR> buildGeometryInfos;
@@ -129,9 +129,93 @@ namespace vr
 
     std::pair<TLASHandle, TLASBuildInfo> VulrayDevice::CreateTLAS(const TLASCreateInfo& info)
     {
+        TLASHandle outAccel = {};
+        TLASBuildInfo outBuildInfo = {};
+
+
+
+        auto buildGeometry = vk::AccelerationStructureGeometryDataKHR()
+            .setInstances(vk::AccelerationStructureGeometryInstancesDataKHR()
+                .setArrayOfPointers(false));
+
+        outBuildInfo.Geometry = std::make_shared<vk::AccelerationStructureGeometryKHR>(vk::AccelerationStructureGeometryKHR()
+            .setGeometry(buildGeometry)
+            .setGeometryType(vk::GeometryTypeKHR::eInstances)
+            .setFlags(vk::GeometryFlagBitsKHR::eOpaque));
+            
+        //Create the build info
+        outBuildInfo.BuildGeometryInfo = vk::AccelerationStructureBuildGeometryInfoKHR()
+            .setType(vk::AccelerationStructureTypeKHR::eTopLevel)
+            .setFlags(info.Flags)
+            .setMode(vk::BuildAccelerationStructureModeKHR::eBuild)
+            .setDstAccelerationStructure(nullptr)
+            .setPGeometries(outBuildInfo.Geometry.get())
+            .setGeometryCount(1);
+
+        // Fill Range Info
+        outBuildInfo.RangeInfo = vk::AccelerationStructureBuildRangeInfoKHR()
+            .setPrimitiveCount(0) // number of instances, will be modified in the build function
+            .setPrimitiveOffset(0)
+            .setFirstVertex(0)
+            .setTransformOffset(0);
+
+        // Get the size requirements for the acceleration structure
+        mDevice.getAccelerationStructureBuildSizesKHR(
+            vk::AccelerationStructureBuildTypeKHR::eDevice,
+            &outBuildInfo.BuildGeometryInfo,
+            &info.MaxInstanceCount, // max number of instances/primitives in the geometry, which is always 1 for TLAS builds
+            &outBuildInfo.BuildSizes,
+            mDynLoader); 
         
+        //Create the buffer for the acceleration structure
+        outAccel.TLASBuffer = CreateBuffer(outBuildInfo.BuildSizes.accelerationStructureSize, 
+            0, // no flags for VMA
+            vk::BufferUsageFlagBits::eAccelerationStructureStorageKHR);
+        
+
+        //Create the acceleration structure
+        auto createInfo = vk::AccelerationStructureCreateInfoKHR()
+            .setType(vk::AccelerationStructureTypeKHR::eTopLevel)
+            .setBuffer(outAccel.TLASBuffer.Buffer)
+            .setSize(outBuildInfo.BuildSizes.accelerationStructureSize);
+        
+        outAccel.AccelerationStructure = mDevice.createAccelerationStructureKHR(createInfo, nullptr, mDynLoader);
+
+        outAccel.TLASBuffer.DevAddress = mDevice.getAccelerationStructureAddressKHR(vk::AccelerationStructureDeviceAddressInfoKHR()
+            .setAccelerationStructure(outAccel.AccelerationStructure), mDynLoader);
+
+        // Fill in the build info with the acceleration structure
+
+        outBuildInfo.BuildGeometryInfo.setDstAccelerationStructure(outAccel.AccelerationStructure);
+
+        return std::make_pair(outAccel, outBuildInfo);
     }
 
+    AllocatedBuffer VulrayDevice::BuildTLAS(TLASBuildInfo& buildInfo, const AllocatedBuffer& InstanceBuffer, uint32_t instanceCount, vk::CommandBuffer cmdBuf, const AllocatedBuffer* scratch)
+    {
+
+        buildInfo.RangeInfo.primitiveCount = instanceCount;
+
+        buildInfo.Geometry->geometry.instances.data = InstanceBuffer.DevAddress;
+
+        //Get the scratch buffer size
+        uint32_t scratchSize = buildInfo.BuildSizes.buildScratchSize;
+
+        //Create the scratch buffer
+        AllocatedBuffer scratchBuffer = CreateBuffer(scratchSize, 0,
+            vk::BufferUsageFlagBits::eStorageBuffer,
+            mAccelProperties.minAccelerationStructureScratchOffsetAlignment);
+
+        //Set the scratch buffer
+        buildInfo.BuildGeometryInfo.setScratchData(scratchBuffer.DevAddress);
+
+        auto* pBuildRangeInfo = &buildInfo.RangeInfo;
+
+        //Build the acceleration structure
+        cmdBuf.buildAccelerationStructuresKHR(1, &buildInfo.BuildGeometryInfo, &pBuildRangeInfo, mDynLoader);
+
+        return scratchBuffer;
+    }
 
 
     void VulrayDevice::AddAccelerationBuildBarrier(vk::CommandBuffer cmdBuf)
@@ -154,7 +238,13 @@ namespace vr
         DestroyBuffer(blas.BLASBuffer);
     }
 
-    vk::AccelerationStructureGeometryDataKHR ConvertToVulkanGeometry(const GeometryData& geom)
+    void VulrayDevice::DestroyTLAS(TLASHandle &tlas)
+    {
+        mDevice.destroyAccelerationStructureKHR(tlas.AccelerationStructure, nullptr, mDynLoader);
+        DestroyBuffer(tlas.TLASBuffer);
+    }
+
+    vk::AccelerationStructureGeometryDataKHR ConvertToVulkanGeometry(const GeometryData &geom)
     {
         vk::AccelerationStructureGeometryDataKHR outGeom = {};
 

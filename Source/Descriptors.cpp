@@ -78,7 +78,7 @@ namespace vr
     {
         return mDevice.createDescriptorPool(vk::DescriptorPoolCreateInfo()
             .setMaxSets(maxSets)
-            .setFlags(vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet | flags)
+            .setFlags(flags)
             .setPoolSizeCount(static_cast<uint32_t>(poolSizes.size()))
             .setPPoolSizes(poolSizes.data()));
     }

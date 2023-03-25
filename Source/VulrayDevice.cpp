@@ -51,9 +51,4 @@ namespace vr
     }
 
 
-    //only place where it compiles is this file so its here now
-    uint64_t AllocatedBuffer::Size() const
-    {
-        return Allocation->GetSize();
-    }
 }

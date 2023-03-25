@@ -59,10 +59,19 @@ namespace vr
         }
 
         outBuffer.DevAddress = mDevice.getBufferAddress(vk::BufferDeviceAddressInfo().setBuffer(outBuffer.Buffer));
+        outBuffer.Size = size;
         return outBuffer;
     }
 
-    void VulrayDevice::DestroyBuffer(AllocatedBuffer& buffer)
+    AllocatedBuffer VulrayDevice::CreateInstanceBuffer(uint32_t instanceCount)
+    {
+        return CreateBuffer(
+            instanceCount * sizeof(vk::AccelerationStructureInstanceKHR),
+            VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
+            vk::BufferUsageFlagBits::eAccelerationStructureBuildInputReadOnlyKHR);
+    }
+
+    void VulrayDevice::DestroyBuffer(AllocatedBuffer &buffer)
     {
         vmaDestroyBuffer(mVMAllocator, buffer.Buffer, buffer.Allocation);
         buffer.Buffer = nullptr;

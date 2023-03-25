@@ -49,21 +49,28 @@ namespace vr
         [[nodiscard]] std::pair<BLASHandle, BLASBuildInfo> CreateBLAS(const BLASCreateInfo& info);
 
         // Builds the acceleration structure and returns the scratch buffer for building, the scratch buffer is not destroyed
-        // After the build, the scratch buffer should be destroyed by the user
-        [[nodiscard]] AllocatedBuffer BuildBLAS(std::vector<BLASBuildInfo>& buildInfos, vk::CommandBuffer cmdBuf);
+        // After the build, the scratch buffer should be destroyed by the user or reused for another build
+        // in case the scractch buffer is provided, it will be used for the build and the returned buffer will be the same as the provided one
+        [[nodiscard]] AllocatedBuffer BuildBLAS(std::vector<BLASBuildInfo>& buildInfos, vk::CommandBuffer cmdBuf, const AllocatedBuffer* scratch = nullptr);
 
 
         //Creates a top level acceleration structure and gives BuildInfo for the build
         [[nodiscard]] std::pair<TLASHandle, TLASBuildInfo> CreateTLAS(const TLASCreateInfo& info);
 
         // Builds the acceleration structure 
-        [[nodiscard]] void BuildTLAS(TLASBuildInfo& buildInfos, vk::CommandBuffer cmdBuf);
+        // After the build, the scratch buffer should be destroyed by the user or reused for another build
+        // in case the scractch buffer is provided, it will be used for the build and the returned buffer will be the same as the provided one
+        [[nodiscard]] AllocatedBuffer BuildTLAS(TLASBuildInfo& buildInfo, 
+            const AllocatedBuffer& InstanceBuffer, uint32_t instanceCount, 
+            vk::CommandBuffer cmdBuf, const AllocatedBuffer* scratch = nullptr);
 
         //Adds barrier to the command buffer to ensure the acceleration structure is built before other acceleration structures are built
         void AddAccelerationBuildBarrier(vk::CommandBuffer cmdBuf);
 
 
         void DestroyBLAS(BLASHandle& blas);
+
+        void DestroyTLAS(TLASHandle& tlas);
 
 
         //--------------------------------------------------------------------------------
@@ -79,6 +86,8 @@ namespace vr
             VmaAllocationCreateFlags flags,
             vk::BufferUsageFlags bufferUsage,
             uint32_t alignment = 0);
+
+        [[nodiscard]] AllocatedBuffer CreateInstanceBuffer(uint32_t instanceCount);
 
         //Uploads data to a buffer, via mapping the buffer and memcpy
         void UpdateBuffer(AllocatedBuffer alloc, void* data, const vk::DeviceSize size, uint32_t offset = 0);

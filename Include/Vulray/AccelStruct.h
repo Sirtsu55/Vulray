@@ -82,13 +82,17 @@ namespace vr
         vk::AccelerationStructureBuildSizesInfoKHR BuildSizes = {};
         
         vk::AccelerationStructureBuildGeometryInfoKHR BuildGeometryInfo = {};
-        
+
+        std::shared_ptr<vk::AccelerationStructureGeometryKHR> Geometry = {};
+
         vk::AccelerationStructureBuildRangeInfoKHR RangeInfo = {};
     };
 
     struct TLASHandle
     {
         AllocatedBuffer TLASBuffer = {};
+
+        AllocatedBuffer InstancesBuffer = {}; // buffer containing the instances for the TLAS
         
         AllocatedBuffer ScratchBuffer = {}; // scratch buffer for building the TLAS will be reused when updating the TLAS
 

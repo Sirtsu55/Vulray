@@ -88,6 +88,7 @@ namespace vr
         vk::AccelerationStructureBuildRangeInfoKHR RangeInfo = {};
 
         uint32_t MaxInstanceCount = 0;
+
     };
 
     struct TLASHandle

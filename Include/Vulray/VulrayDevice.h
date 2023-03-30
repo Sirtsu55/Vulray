@@ -133,7 +133,7 @@ namespace vr
 
         [[nodiscard]] vk::DescriptorSetLayout CreateDescriptorSetLayout(const std::vector<DescriptorItem> &bindings);
 
-        [[nodiscard]] vk::DescriptorPool CreateDescriptorPool(const std::vector<vk::DescriptorPoolSize>& poolSizes, vk::DescriptorPoolCreateFlagBits flags, uint32_t maxSets);
+        [[nodiscard]] vk::DescriptorPool CreateDescriptorPool(const std::vector<vk::DescriptorPoolSize>& poolSizes, vk::DescriptorPoolCreateFlags flags, uint32_t maxSets);
 
         //if maxVariableDescriptors is 0, it will create a descriptor set without variable descriptors
         [[nodiscard]] vk::DescriptorSet AllocateDescriptorSet(vk::DescriptorPool pool, vk::DescriptorSetLayout layout, uint32_t maxVariableDescriptors = 0);

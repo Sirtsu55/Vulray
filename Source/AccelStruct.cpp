@@ -102,9 +102,14 @@ namespace vr
             buildGeometryInfos.push_back(buildInfos[i].BuildGeometryInfo);
         }
 
-        AllocatedBuffer scratchBuffer = CreateBuffer(scratchSize, 0,
-            vk::BufferUsageFlagBits::eStorageBuffer,
-            mAccelProperties.minAccelerationStructureScratchOffsetAlignment);
+        AllocatedBuffer scratchBuffer = {};
+
+        if (scratch != nullptr)
+            scratchBuffer = *scratch;
+        else
+            scratchBuffer = CreateBuffer(scratchSize, 0,
+                vk::BufferUsageFlagBits::eStorageBuffer,
+                mAccelProperties.minAccelerationStructureScratchOffsetAlignment);
 
         // loop over build infos and set scratch buffers
         // this will offset the scratch buffer so that each build info has its own region of the scratch buffer
@@ -202,9 +207,14 @@ namespace vr
         uint32_t scratchSize = buildInfo.BuildSizes.buildScratchSize;
 
         //Create the scratch buffer
-        AllocatedBuffer scratchBuffer = CreateBuffer(scratchSize, 0,
-            vk::BufferUsageFlagBits::eStorageBuffer,
-            mAccelProperties.minAccelerationStructureScratchOffsetAlignment);
+        AllocatedBuffer scratchBuffer = {};
+
+        if (scratch != nullptr)
+            scratchBuffer = *scratch;
+        else
+            scratchBuffer = CreateBuffer(scratchSize, 0,
+                vk::BufferUsageFlagBits::eStorageBuffer,
+                mAccelProperties.minAccelerationStructureScratchOffsetAlignment);
 
         //Set the scratch buffer
         buildInfo.BuildGeometryInfo.setScratchData(scratchBuffer.DevAddress);

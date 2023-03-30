@@ -104,7 +104,7 @@ namespace vr
 
         AllocatedBuffer scratchBuffer = {};
 
-        if (scratch != nullptr)
+        if (scratch != nullptr && scratch->Size >= scratchSize)
             scratchBuffer = *scratch;
         else
             scratchBuffer = CreateBuffer(scratchSize, 0,
@@ -136,8 +136,6 @@ namespace vr
     {
         TLASHandle outAccel = {};
         TLASBuildInfo outBuildInfo = {};
-
-
 
         auto buildGeometry = vk::AccelerationStructureGeometryDataKHR()
             .setInstances(vk::AccelerationStructureGeometryInstancesDataKHR()
@@ -193,6 +191,8 @@ namespace vr
 
         outBuildInfo.BuildGeometryInfo.setDstAccelerationStructure(outAccel.AccelerationStructure);
 
+        outBuildInfo.MaxInstanceCount = info.MaxInstanceCount;
+
         return std::make_pair(outAccel, outBuildInfo);
     }
 
@@ -209,7 +209,7 @@ namespace vr
         //Create the scratch buffer
         AllocatedBuffer scratchBuffer = {};
 
-        if (scratch != nullptr)
+        if (scratch != nullptr && scratch->Size >= scratchSize)
             scratchBuffer = *scratch;
         else
             scratchBuffer = CreateBuffer(scratchSize, 0,
@@ -227,6 +227,34 @@ namespace vr
         return scratchBuffer;
     }
 
+    std::pair<TLASHandle, TLASBuildInfo> VulrayDevice::UpdateTLAS(TLASHandle& oldTLAS, TLASBuildInfo& oldBuildInfo, bool destroyOld)
+    {
+        TLASHandle outAccel = oldTLAS;
+        TLASBuildInfo outBuildInfo = oldBuildInfo;
+
+        // Create new acceleration structure
+        // sizes are the same as the old one, because we are only creating a new one with the same number of instances
+        // otherwise we would need create a new one with the new number of instances, from CreateTLAS(...)
+
+        auto createInfo = vk::AccelerationStructureCreateInfoKHR()
+            .setType(vk::AccelerationStructureTypeKHR::eTopLevel)
+            .setBuffer(outAccel.TLASBuffer.Buffer)
+            .setSize(outBuildInfo.BuildSizes.accelerationStructureSize);
+
+        outAccel.AccelerationStructure = mDevice.createAccelerationStructureKHR(createInfo, nullptr, mDynLoader);
+
+        outAccel.TLASBuffer.DevAddress = mDevice.getAccelerationStructureAddressKHR(vk::AccelerationStructureDeviceAddressInfoKHR()
+            .setAccelerationStructure(outAccel.AccelerationStructure), mDynLoader);
+
+        outBuildInfo.BuildGeometryInfo.setDstAccelerationStructure(outAccel.AccelerationStructure);
+
+        // destroy the old one
+        if(destroyOld)
+            DestroyAccelerationStructure(oldTLAS.AccelerationStructure);
+
+        return std::make_pair(outAccel, outBuildInfo);
+
+    }
 
     void VulrayDevice::AddAccelerationBuildBarrier(vk::CommandBuffer cmdBuf)
     {
@@ -254,6 +282,10 @@ namespace vr
         DestroyBuffer(tlas.TLASBuffer);
     }
 
+    void VulrayDevice::DestroyAccelerationStructure(const vk::AccelerationStructureKHR &accel)
+    {
+        mDevice.destroyAccelerationStructureKHR(accel, nullptr, mDynLoader);
+    }
     vk::AccelerationStructureGeometryDataKHR ConvertToVulkanGeometry(const GeometryData &geom)
     {
         vk::AccelerationStructureGeometryDataKHR outGeom = {};

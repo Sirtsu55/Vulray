@@ -73,7 +73,7 @@ namespace vr
         uint32_t callSize = AlignUp(sbt.CallableShaderRecordSize + mRayTracingProperties.shaderGroupHandleSize, mRayTracingProperties.shaderGroupHandleAlignment);
 
 
-        //don't add size if there are no shaders of that type
+        //don't add size if there are no shaders of that type, NOTE: raygen shader is required so we don't check for that
         if (sbt.MissShaders.size() == 0)
             missSize = 0;
         if (sbt.HitGroups.size() == 0)
@@ -130,26 +130,30 @@ namespace vr
         //copy records and shader handles into the SBT buffer
         void* rgenData = MapBuffer(outSBT.RayGenBuffer);
         {
-            memcpy(rgenData, sbtHandles.data() + handleOffset, mRayTracingProperties.shaderGroupHandleSize);
+            if(rgenData)
+                memcpy(rgenData, sbtHandles.data() + handleOffset, mRayTracingProperties.shaderGroupHandleSize);
             handleOffset += mRayTracingProperties.shaderGroupHandleSize; // offset in the opaque handle vector
         }
         void* missData = missSize > 0 ? MapBuffer(outSBT.MissBuffer) : nullptr;
         for(uint32_t i = 0; i < sbt.MissShaders.size(); i++)
         {
-            memcpy(missData, sbtHandles.data() + handleOffset, mRayTracingProperties.shaderGroupHandleSize);
+            if(missData)
+                memcpy(missData, sbtHandles.data() + handleOffset, mRayTracingProperties.shaderGroupHandleSize);
             handleOffset += mRayTracingProperties.shaderGroupHandleSize;
         }
         void* hitData = hitSize > 0 ? MapBuffer(outSBT.HitGroupBuffer) : nullptr;
         for(uint32_t i = 0; i < sbt.HitGroups.size(); i++)
         {
-            memcpy(hitData, sbtHandles.data() + handleOffset, mRayTracingProperties.shaderGroupHandleSize);
+            if(hitData)
+                memcpy(hitData, sbtHandles.data() + handleOffset, mRayTracingProperties.shaderGroupHandleSize);
             handleOffset += mRayTracingProperties.shaderGroupHandleSize;
         }
         
         void* callData = callSize > 0 ? MapBuffer(outSBT.CallableBuffer) : nullptr;
         for(uint32_t i = 0; i < sbt.CallableShaders.size(); i++)
         {
-            memcpy(callData, sbtHandles.data() + handleOffset, mRayTracingProperties.shaderGroupHandleSize);
+            if(callData)
+                memcpy(callData, sbtHandles.data() + handleOffset, mRayTracingProperties.shaderGroupHandleSize);
             handleOffset += mRayTracingProperties.shaderGroupHandleSize;
         }
 

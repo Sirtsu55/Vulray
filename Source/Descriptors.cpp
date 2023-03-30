@@ -74,11 +74,11 @@ namespace vr
             .setPNext(&flags));
     }
 
-    vk::DescriptorPool VulrayDevice::CreateDescriptorPool(const std::vector<vk::DescriptorPoolSize>& poolSizes, vk::DescriptorPoolCreateFlagBits flags, uint32_t maxSets)
+    vk::DescriptorPool VulrayDevice::CreateDescriptorPool(const std::vector<vk::DescriptorPoolSize>& poolSizes, vk::DescriptorPoolCreateFlags flags, uint32_t maxSets)
     {
         return mDevice.createDescriptorPool(vk::DescriptorPoolCreateInfo()
             .setMaxSets(maxSets)
-            .setFlags(vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet | flags)
+            .setFlags(flags)
             .setPoolSizeCount(static_cast<uint32_t>(poolSizes.size()))
             .setPPoolSizes(poolSizes.data()));
     }

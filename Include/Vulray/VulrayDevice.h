@@ -45,50 +45,32 @@ namespace vr
         //Acceleration Structure functions
         //--------------------------------------------------------------------------------
 
-        //-----------------------Acceleration Creation---------------------------------
+        //Creates a bottom level acceleration structure and gives BuildInfo for the build
+        [[nodiscard]] std::pair<BLASHandle, BLASBuildInfo> CreateBLAS(const BLASCreateInfo& info);
 
-        //Creates a bottom level acceleration structure
-        [[nodiscard]] BLASHandle CreateBLAS(BLASCreateInfo& info);
+        // Builds the acceleration structure and returns the scratch buffer for building, the scratch buffer is not destroyed
+        // After the build, the scratch buffer should be destroyed by the user or reused for another build
+        // in case the scractch buffer is provided, it will be used for the build and the returned buffer will be the same as the provided one
+        [[nodiscard]] AllocatedBuffer BuildBLAS(std::vector<BLASBuildInfo>& buildInfos, vk::CommandBuffer cmdBuf, const AllocatedBuffer* scratch = nullptr);
 
-        //creates a new acceleration structure, and updates the old one
-        [[nodiscard]] TLASHandle CreateTLAS(TLASCreateInfo& info);
 
-        //recreates the accel from the old previous TLAS buffers
-        [[nodiscard]] TLASHandle UpdateTLAS(TLASHandle accel, TLASCreateInfo& info);
+        //Creates a top level acceleration structure and gives BuildInfo for the build
+        [[nodiscard]] std::pair<TLASHandle, TLASBuildInfo> CreateTLAS(const TLASCreateInfo& info);
 
-        //-----------------------Acceleration Build---------------------------------
-
-        //records commands to a bottom level acceleration structure, to be built
-        void BuildBLAS(BLASHandle& accel, BLASCreateInfo& info, vk::CommandBuffer cmdBuf);
-        
-        //records commands to multiple bottom level acceleration structures, to be built      
-        void BuildBLAS(std::vector<BLASHandle>& accel, std::vector<BLASCreateInfo>& info, vk::CommandBuffer cmdBuf);
-        
-        //records commands to build one TLAS
-        void BuildTLAS(TLASHandle& accel, TLASCreateInfo& info, vk::CommandBuffer cmdBuf);
+        // Builds the acceleration structure 
+        // After the build, the scratch buffer should be destroyed by the user or reused for another build
+        // in case the scractch buffer is provided, it will be used for the build and the returned buffer will be the same as the provided one
+        [[nodiscard]] AllocatedBuffer BuildTLAS(TLASBuildInfo& buildInfo, 
+            const AllocatedBuffer& InstanceBuffer, uint32_t instanceCount, 
+            vk::CommandBuffer cmdBuf, const AllocatedBuffer* scratch = nullptr);
 
         //Adds barrier to the command buffer to ensure the acceleration structure is built before other acceleration structures are built
         void AddAccelerationBuildBarrier(vk::CommandBuffer cmdBuf);
 
-        //-----------------------Acceleration Destruction---------------------------------
 
-        //Destroys the acceleration structure
-        void DestroyBLAS(BLASHandle& accel);
-        
-        void DestroyTLAS(TLASHandle& accel);
-        
-        void DestroyUpdatedTLAS(TLASHandle& accel);
+        void DestroyBLAS(BLASHandle& blas);
 
-        //-----------------------Acceleration Misc---------------------------------
-
-        void UpdateTLASInstances(const TLASHandle& tlas, void* instances, uint32_t instanceCount, uint32_t offset = 0);
-
-        //Cleans up all the unnecessary data used during the build process
-        void PostBuildBLASCleanup(BLASHandle& accel);
-        
-        
-
-
+        void DestroyTLAS(TLASHandle& tlas);
 
 
         //--------------------------------------------------------------------------------
@@ -104,6 +86,8 @@ namespace vr
             VmaAllocationCreateFlags flags,
             vk::BufferUsageFlags bufferUsage,
             uint32_t alignment = 0);
+
+        [[nodiscard]] AllocatedBuffer CreateInstanceBuffer(uint32_t instanceCount);
 
         //Uploads data to a buffer, via mapping the buffer and memcpy
         void UpdateBuffer(AllocatedBuffer alloc, void* data, const vk::DeviceSize size, uint32_t offset = 0);
@@ -149,7 +133,7 @@ namespace vr
 
         [[nodiscard]] vk::DescriptorSetLayout CreateDescriptorSetLayout(const std::vector<DescriptorItem> &bindings);
 
-        [[nodiscard]] vk::DescriptorPool CreateDescriptorPool(const std::vector<vk::DescriptorPoolSize>& poolSizes, vk::DescriptorPoolCreateFlagBits flags, uint32_t maxSets);
+        [[nodiscard]] vk::DescriptorPool CreateDescriptorPool(const std::vector<vk::DescriptorPoolSize>& poolSizes, vk::DescriptorPoolCreateFlags flags, uint32_t maxSets);
 
         //if maxVariableDescriptors is 0, it will create a descriptor set without variable descriptors
         [[nodiscard]] vk::DescriptorSet AllocateDescriptorSet(vk::DescriptorPool pool, vk::DescriptorSetLayout layout, uint32_t maxVariableDescriptors = 0);
@@ -187,10 +171,6 @@ namespace vr
 
     private:
 
-        //same as CreateBuffer, but with alignment
-		
-
-
 
         vk::DispatchLoaderDynamic mDynLoader;
 
@@ -203,15 +183,9 @@ namespace vr
 
         VmaAllocator mVMAllocator;
 
-        // std::vector<vk::Semaphore> mSemaphores;
-        // std::vector<vk::Fence> mFences;
     };
-    
-    vk::AccelerationStructureGeometryKHR FillBottomAccelGeometry(
-        const GeometryData& info, 
-        vk::DeviceAddress vertexDevAddress, 
-        vk::DeviceAddress indexDevAddress,
-        vk::DeviceAddress transformDevAddress = 0);
+
+    vk::AccelerationStructureGeometryDataKHR ConvertToVulkanGeometry(const GeometryData& geom);
     
 } 
 

@@ -42,8 +42,8 @@ namespace vr
         if(alignment)
         {
             result = (vk::Result)vmaCreateBufferWithAlignment(mVMAllocator,
-                (VkBufferCreateInfo*)&bufInfo, &allocInf,                   // type punning
-                mAccelProperties.minAccelerationStructureScratchOffsetAlignment,
+                (VkBufferCreateInfo*)&bufInfo, &allocInf,                 // type punning
+                alignment,
                 (VkBuffer*)&outBuffer.Buffer, &outBuffer.Allocation, nullptr);
         }
         else
@@ -63,7 +63,15 @@ namespace vr
         return outBuffer;
     }
 
-    void VulrayDevice::DestroyBuffer(AllocatedBuffer& buffer)
+    AllocatedBuffer VulrayDevice::CreateInstanceBuffer(uint32_t instanceCount)
+    {
+        return CreateBuffer(
+            instanceCount * sizeof(vk::AccelerationStructureInstanceKHR),
+            VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
+            vk::BufferUsageFlagBits::eAccelerationStructureBuildInputReadOnlyKHR);
+    }
+
+    void VulrayDevice::DestroyBuffer(AllocatedBuffer &buffer)
     {
         vmaDestroyBuffer(mVMAllocator, buffer.Buffer, buffer.Allocation);
         buffer.Buffer = nullptr;

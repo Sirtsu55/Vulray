@@ -86,6 +86,9 @@ namespace vr
         std::shared_ptr<vk::AccelerationStructureGeometryKHR> Geometry = {};
 
         vk::AccelerationStructureBuildRangeInfoKHR RangeInfo = {};
+
+        uint32_t MaxInstanceCount = 0;
+
     };
 
     struct TLASHandle

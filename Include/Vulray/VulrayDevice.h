@@ -64,6 +64,8 @@ namespace vr
             const AllocatedBuffer& InstanceBuffer, uint32_t instanceCount, 
             vk::CommandBuffer cmdBuf, const AllocatedBuffer* scratch = nullptr);
 
+        [[nodiscard]] std::pair<TLASHandle, TLASBuildInfo> UpdateTLAS(TLASHandle& oldTLAS, TLASBuildInfo& oldBuildInfo, bool destroyOld = true);
+
         //Adds barrier to the command buffer to ensure the acceleration structure is built before other acceleration structures are built
         void AddAccelerationBuildBarrier(vk::CommandBuffer cmdBuf);
 
@@ -71,6 +73,8 @@ namespace vr
         void DestroyBLAS(BLASHandle& blas);
 
         void DestroyTLAS(TLASHandle& tlas);
+
+        void DestroyAccelerationStructure(const vk::AccelerationStructureKHR& accel);
 
 
         //--------------------------------------------------------------------------------

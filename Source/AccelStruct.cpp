@@ -87,7 +87,7 @@ namespace vr
     }
 
 
-    AllocatedBuffer VulrayDevice::BuildBLAS(std::vector<BLASBuildInfo> &buildInfos, vk::CommandBuffer cmdBuf, const AllocatedBuffer* scratch)
+    AllocatedBuffer VulrayDevice::BuildBLAS(const std::vector<BLASBuildInfo> &buildInfos, vk::CommandBuffer cmdBuf, const AllocatedBuffer* scratch)
     {
         std::vector<vk::AccelerationStructureBuildRangeInfoKHR*> pBuildRangeInfos;
         std::vector<vk::AccelerationStructureBuildGeometryInfoKHR> buildGeometryInfos;
@@ -126,6 +126,58 @@ namespace vr
         
 
         return scratchBuffer;
+    }
+
+    BLASBuildInfo VulrayDevice::UpdateBLAS(BLASUpdateInfo& updateInfo)
+    {
+
+        bool useSourceDeviceAddress = updateInfo.UpdatedGeometryAddresses.size() == 0;
+        
+        uint32_t geomSize = updateInfo.SourceBuildInfo.GeometryCount;
+
+        BLASBuildInfo outBuildInfo = updateInfo.SourceBuildInfo;
+
+        outBuildInfo.BuildGeometryInfo.setMode(vk::BuildAccelerationStructureModeKHR::eUpdate);
+
+        std::vector<uint32_t> maxPrimitiveCounts(geomSize);
+
+        // setup the primitive counts and ranges
+        for (uint32_t i = 0; i < geomSize; i++)
+        {
+            if (!useSourceDeviceAddress)
+            {
+                auto geomType = updateInfo.SourceBuildInfo.Geometries[i].geometryType;
+                if(geomType == vk::GeometryTypeKHR::eTriangles)
+                {
+                    outBuildInfo.Geometries[i].geometry.triangles.vertexData = updateInfo.UpdatedGeometryAddresses[i].VertexDevAddress;
+                    outBuildInfo.Geometries[i].geometry.triangles.indexData = updateInfo.UpdatedGeometryAddresses[i].IndexDevAddress;
+                }
+                else if(geomType == vk::GeometryTypeKHR::eAabbs)
+                {
+                    outBuildInfo.Geometries[i].geometry.aabbs.data = updateInfo.UpdatedGeometryAddresses[i].VertexDevAddress;
+                }
+            }
+            
+
+            maxPrimitiveCounts[i] = updateInfo.SourceBuildInfo.Ranges[i].primitiveCount;
+            outBuildInfo.Ranges[i].primitiveOffset = 0;
+            outBuildInfo.Ranges[i].primitiveCount = updateInfo.SourceBuildInfo.Ranges[i].primitiveCount;
+        }
+        
+
+        // Get the size requirements for the acceleration structure
+        mDevice.getAccelerationStructureBuildSizesKHR(
+            vk::AccelerationStructureBuildTypeKHR::eDevice,
+            &outBuildInfo.BuildGeometryInfo,
+            maxPrimitiveCounts.data(),
+            &outBuildInfo.BuildSizes,
+            mDynLoader); // This will fill in the size requirements
+
+
+        // seup dst and src acceleration structures
+        outBuildInfo.BuildGeometryInfo.srcAccelerationStructure = updateInfo.SourceBLAS->AccelerationStructure;
+        outBuildInfo.BuildGeometryInfo.dstAccelerationStructure = updateInfo.SourceBLAS->AccelerationStructure;
+        return outBuildInfo;
     }
 
     //--------------------------------------------------------------------------------------
@@ -296,17 +348,17 @@ namespace vr
         {
             return outGeom.setTriangles(vk::AccelerationStructureGeometryTrianglesDataKHR()
                 .setVertexFormat(geom.VertexFormat)
-                .setVertexData(geom.VertexDevAddress)
+                .setVertexData(geom.DataAddresses.VertexDevAddress)
                 .setVertexStride(geom.Stride)
                 .setMaxVertex(geom.PrimitiveCount * 3) // 3 vertices per triangle
                 .setIndexType(geom.IndexFormat)
-                .setIndexData(geom.IndexDevAddress)
-                .setTransformData(geom.TransformBuffer));
+                .setIndexData(geom.DataAddresses.IndexDevAddress)
+                .setTransformData(geom.DataAddresses.TransformBuffer));
         }
         case vk::GeometryTypeKHR::eAabbs:
         {
             return outGeom.setAabbs(vk::AccelerationStructureGeometryAabbsDataKHR()
-                .setData(geom.AABBDevAddress)
+                .setData(geom.DataAddresses.AABBDevAddress)
                 .setStride(geom.Stride));
         }
         }

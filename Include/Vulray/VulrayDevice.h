@@ -48,18 +48,23 @@ namespace vr
         //Creates a bottom level acceleration structure and gives BuildInfo for the build
         [[nodiscard]] std::pair<BLASHandle, BLASBuildInfo> CreateBLAS(const BLASCreateInfo& info);
 
-        // Builds the acceleration structure and returns the scratch buffer for building, the scratch buffer is not destroyed
+        // Builds the acceleration structure and returns the scratch buffer for building
         // After the build, the scratch buffer should be destroyed by the user or reused for another build
         // in case the scractch buffer is provided, it will be used for the build and the returned buffer will be the same as the provided one
-        [[nodiscard]] AllocatedBuffer BuildBLAS(std::vector<BLASBuildInfo>& buildInfos, vk::CommandBuffer cmdBuf, const AllocatedBuffer* scratch = nullptr);
+        // if the provided scratch buffer is not big enough, a new one will be created and returned
+        // a simple check can be done by comparing the size of the returned buffer
+        // with the size of the provided one to deal with the extra memory allocation
+        [[nodiscard]] AllocatedBuffer BuildBLAS(const  std::vector<BLASBuildInfo>& buildInfos, vk::CommandBuffer cmdBuf, const AllocatedBuffer* scratch = nullptr);
 
+        // Updates the acceleration structure and returns the scratch buffer for building
+        // After the update, user should call BuildBLAS with the returned build infos
+        [[nodiscard]] BLASBuildInfo UpdateBLAS(BLASUpdateInfo& updateInfo);
 
         //Creates a top level acceleration structure and gives BuildInfo for the build
         [[nodiscard]] std::pair<TLASHandle, TLASBuildInfo> CreateTLAS(const TLASCreateInfo& info);
 
         // Builds the acceleration structure 
-        // After the build, the scratch buffer should be destroyed by the user or reused for another build
-        // in case the scractch buffer is provided, it will be used for the build and the returned buffer will be the same as the provided one
+        // Same rules as BuildBLAS for the scratch buffer
         [[nodiscard]] AllocatedBuffer BuildTLAS(TLASBuildInfo& buildInfo, 
             const AllocatedBuffer& InstanceBuffer, uint32_t instanceCount, 
             vk::CommandBuffer cmdBuf, const AllocatedBuffer* scratch = nullptr);

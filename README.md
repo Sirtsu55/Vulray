@@ -1,5 +1,7 @@
 # Vulray - Raytracing Simplified
 
+<img src=https://user-images.githubusercontent.com/65868911/229463845-60a57bbd-4e80-4f1b-930e-e90a0569b7e1.jpg width="800" height="400">
+
 ## Introduction
 Vulray is a library to simplify Vulkan Raytracing.
 This library is meant for people wanting to dip their hands into Vulkan Raytracing without any worries of writing boilerplate code for Acceleration Structure, SBT, Descriptors, Pipelines, etc.
@@ -8,7 +10,7 @@ Using the library does precede some basic understanding of Vulkan objects.
 ## Features
 - Easily creating Vulkan Device & Instance (~20LoC) ✅
 - Bottom Level Acceleration Build: ✅
-- Bottom Level Acceleration Update: ❌ **Upcoming Feature**
+- Bottom Level Acceleration Update: ✅
 - Top Level Acceleration Build/Update: ✅
 - SBT Creation/Update: ✅
 - Descriptor Set Creation/Update: ✅

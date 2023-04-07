@@ -3,7 +3,29 @@
 
 namespace vr
 {
-    
+    // Contains the device address of the geometry data
+    // so either the (vertex buffer and index buffer) or the (AABB buffer)
+    struct GeometryDeviceAddress
+    {
+        GeometryDeviceAddress() = default;
+        GeometryDeviceAddress(vk::DeviceAddress vertexOrAABBDevAddress, vk::DeviceAddress indexDevAddress): 
+            // when vertexDevAddress is updated, AABBDevAddress is updated as well, because they are a union
+            // therefore we don't need to update AABBDevAddress here, as it is also updated
+            VertexDevAddress(vertexOrAABBDevAddress), IndexDevAddress(indexDevAddress) {}
+
+        union 
+        {
+            vk::DeviceAddress VertexDevAddress; //For triangles
+            vk::DeviceAddress AABBDevAddress; //For AABBs
+        };
+
+        vk::DeviceAddress IndexDevAddress = {}; //For triangles, if building AABBs, this should be null, and will be ignored
+
+        //Buffer containing the transform for the geometry, if this is null, the geometry will use the identity matrix
+        vk::DeviceAddress TransformBuffer = {};
+    };
+
+
     struct GeometryData
     {
         // IMPORTANT NOTE
@@ -11,13 +33,8 @@ namespace vr
         // that means the user is responsible for settings device addresses with the offsets
         // if they have multiple geometries in the same buffer
         vk::GeometryTypeKHR Type = vk::GeometryTypeKHR::eTriangles; //Type of geometry, either triangles or AABBs
-        union 
-        {
-            vk::DeviceAddress VertexDevAddress; //For triangles
-            vk::DeviceAddress AABBDevAddress; //For AABBs
-        };
 
-        vk::DeviceAddress IndexDevAddress = {}; //For triangles, if building AABBs, this should be null
+        GeometryDeviceAddress DataAddresses = {}; //Buffer containing the vertices, only used for triangles
 
         vk::IndexType IndexFormat = vk::IndexType::eUint32; //Format of the index buffer, only used for triangles
         vk::Format VertexFormat = vk::Format::eR32G32B32Sfloat; //Format of the vertex buffer, only used for triangles
@@ -30,7 +47,6 @@ namespace vr
         //Flags for the geometry
         vk::GeometryFlagsKHR Flags = vk::GeometryFlagBitsKHR::eOpaque;
 
-        vk::DeviceAddress TransformBuffer = {}; //Buffer containing the transform for the geometry, if this is null, the geometry will not be transformed
     };
     
     //--------------------------------------------------------------------------------------
@@ -40,7 +56,7 @@ namespace vr
     struct BLASCreateInfo
     {
         // all geometries must be the same type either triangles or AABBs
-        std::vector<GeometryData> Geometries; 
+        std::vector<GeometryData> Geometries;
         vk::BuildAccelerationStructureFlagsKHR Flags = vk::BuildAccelerationStructureFlagBitsKHR::ePreferFastTrace;
     };
 
@@ -62,6 +78,21 @@ namespace vr
     {
         vk::AccelerationStructureKHR AccelerationStructure = nullptr;
         AllocatedBuffer BLASBuffer = {};
+    };
+
+    struct BLASUpdateInfo
+    {
+        // A pointer so that we don't replicate the BLASHandle and cause unnecessary copies
+        BLASHandle* SourceBLAS = {};
+
+        // The build info for will be reused from the source BLAS
+        BLASBuildInfo SourceBuildInfo = {};
+
+        // contains the device addresses of the updated geometry
+        // usually this will be the same as the source BLAS, but the triangle/aabb data will be different
+        // transform buffer must be provided if the source BLAS had a transform buffer, else it must be null
+        std::vector<GeometryDeviceAddress> UpdatedGeometryAddresses = {};
+
     };
 
     //--------------------------------------------------------------------------------------

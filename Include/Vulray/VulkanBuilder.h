@@ -69,9 +69,10 @@ namespace vr
 		//Enables validation layers
 		bool EnableDebug = false;
 
-		VkPhysicalDeviceVulkan12Features PhysicalDeviceFeatures12 = {};
-		VkPhysicalDeviceVulkan11Features PhysicalDeviceFeatures11 = {};
 		VkPhysicalDeviceFeatures PhysicalDeviceFeatures10 = {};
+		VkPhysicalDeviceVulkan11Features PhysicalDeviceFeatures11 = {};
+		VkPhysicalDeviceVulkan12Features PhysicalDeviceFeatures12 = {};
+		VkPhysicalDeviceVulkan13Features PhysicalDeviceFeatures13 = {};
 
 		//Debug layers are added automatically if EnableDebug is true
 		std::vector<const char*> InstanceExtensions;

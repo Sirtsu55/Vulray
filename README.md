@@ -24,7 +24,7 @@ Using the library does precede some basic understanding of Vulkan objects.
 VulraySamples has examples of using the Vulray Library with explanations: https://github.com/Sirtsu55/VulraySamples
 
 ## Requirements
-- Vulkan SDK 1.2 or newer
+- Vulkan SDK 1.3
 - Vulkan Ray Tracing capable device. [Check GPU for support](https://vulkan.gpuinfo.org/listdevicescoverage.php?extension=VK_KHR_ray_tracing_pipeline&platform=all)
 - Tested with CMake version 3.22 (can be older)
 - A compiler with C++ 20 support 

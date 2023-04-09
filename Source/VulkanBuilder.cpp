@@ -48,7 +48,7 @@ namespace vr
 	{
         auto instBuilder = vkb::InstanceBuilder()
             .set_debug_callback(DebugCallback == nullptr ? VulrayVulkanDebugCback : DebugCallback)
-            .require_api_version(1, 2, 0);
+            .require_api_version(1, 3, 0);
 
         
         for (auto& ext : InstanceExtensions)
@@ -129,6 +129,7 @@ namespace vr
         physSelector.set_required_features(PhysicalDeviceFeatures10);
         physSelector.set_required_features_11(PhysicalDeviceFeatures11);
         physSelector.set_required_features_12(PhysicalDeviceFeatures12);
+        physSelector.set_required_features_13(PhysicalDeviceFeatures13);
 
         physSelector.set_minimum_version(1, 2);
         auto physResult = physSelector.select();

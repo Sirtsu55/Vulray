@@ -170,12 +170,12 @@ static void ErrorCheckShader(const char *shaderName, const vr::Shader &sdr, vk::
     //check is module is valid
     if(!sdr.Module)
     {
-        VULRAY_LOG_ERROR("{0} module is invalid!", shaderName);
+        VULRAY_FLOG_ERROR("{0} module is invalid!", shaderName);
         return;
     }
     if(sdr.Stage != state)
     {
-        VULRAY_LOG_ERROR("{0} Stage is not {1}!", shaderName, vk::to_string(state));
+        VULRAY_FLOG_ERROR("{0} Stage is not {1}!", shaderName, vk::to_string(state));
     }
   
 

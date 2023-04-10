@@ -8,6 +8,9 @@
 namespace vr
 {
 
+    // Logging types
+    enum class MessageType { Verbose, Info, Warning, Error};
+
     class VulrayDevice
     {
     public:

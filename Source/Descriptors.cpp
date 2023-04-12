@@ -199,8 +199,6 @@ namespace vr
         }
 
         cmdBuf.bindDescriptorBuffersEXT(bindingInfos, mDynLoader);
-
-        return bufferIndices;
     }
 
     void VulrayDevice::BindDescriptorSet(vk::PipelineLayout layout, uint32_t set, uint32_t bufferIndex, vk::DeviceSize offset, vk::CommandBuffer cmdBuf, vk::PipelineBindPoint bindPoint)

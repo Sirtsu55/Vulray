@@ -131,7 +131,8 @@ namespace vr
             .setGroupCount(static_cast<uint32_t>(shaderGroups.size()))
             .setPGroups(shaderGroups.data())
             .setMaxPipelineRayRecursionDepth(recursuionDepth) 
-            .setLayout(layout);
+            .setLayout(layout)
+            .setFlags(vk::PipelineCreateFlagBits::eDescriptorBufferEXT);
 
         auto pipeline = mDevice.createRayTracingPipelineKHR(nullptr, nullptr, pipelineInf, nullptr, mDynLoader);
 

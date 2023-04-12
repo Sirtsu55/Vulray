@@ -195,6 +195,10 @@ static void GetImageInfoOfDescriptorItem(const vr::DescriptorItem& item,
         *pImageInfo = item.GetImageInfo(resourceIndex);
         pData->pSampledImage = pImageInfo;
         break;
+    case vk::DescriptorType::eStorageImage:
+        *pImageInfo = item.GetImageInfo(resourceIndex);
+        pData->pStorageImage = pImageInfo;
+        break;
     }
 }
 

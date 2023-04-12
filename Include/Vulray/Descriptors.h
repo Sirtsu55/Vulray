@@ -1,92 +1,138 @@
 #pragma once
 
+#include "Vulray/Buffer.h"
+
 namespace vr
 {
 
 
+    enum class DescriptorBufferType : uint32_t
+    {
+        // These map straight to vulkan buffer usage flags
 
+        Resource = (uint32_t)vk::BufferUsageFlagBits::eResourceDescriptorBufferEXT,
+        Sampler = (uint32_t)vk::BufferUsageFlagBits::eSamplerDescriptorBufferEXT,
+        CombinedImageSampler = (uint32_t)(vk::BufferUsageFlagBits::eSamplerDescriptorBufferEXT | vk::BufferUsageFlagBits::eResourceDescriptorBufferEXT)
+    };
+
+    struct DescriptorBuffer
+    {
+        AllocatedBuffer Buffer;
+        // size of a single Descriptor set in the buffer
+        // useful for offsetting into the buffer that has multiple IDENTICAL descriptor sets and binding one of them
+        uint32_t SetCount = 0;
+        uint32_t SingleDescriptorSize = 0;
+        DescriptorBufferType Type = DescriptorBufferType::Resource;
+
+        uint32_t GetOffsetToSet(uint32_t setIndex) const { return setIndex * SingleDescriptorSize; }
+    };
+    
     struct DescriptorItem
     {
-        DescriptorItem() = default;
-        DescriptorItem(uint32_t binding,
-        vk::DescriptorType type, 
-        vk::ShaderStageFlags stageFlags, 
-        uint32_t descriptorCount = 1, 
-        void* pitems = nullptr, 
-        vk::DescriptorBindingFlagBits flags = (vk::DescriptorBindingFlagBits)0, bool dynamicArray = false)
-            : Binding(binding), Type(type), StageFlags(stageFlags), DescriptorCount(descriptorCount),  pItems(pitems), mFlags(flags), DynamicArray(dynamicArray)
-        {}
+        //constructor to initialize all fields
+        DescriptorItem(uint32_t binding, vk::DescriptorType type, vk::ShaderStageFlags stageFlags, uint32_t ArraySize, void* pItems, uint32_t dynamicArraySize = 0)
+            : Type(type), Binding(binding), BindingOffset(0), ArraySize(ArraySize), StageFlags(stageFlags),
+            pResources(reinterpret_cast<AllocatedBuffer*>(pItems)), // even if the item isn't a buffer, we can use this field since its a union and a 64-bit address
+            DynamicArraySize(dynamicArraySize) 
+        {
+        }
+
+        vk::DescriptorType Type;
+
+        uint32_t Binding = 0;
+
+        uint32_t BindingOffset = 0; // binding offset is filled in when creating the descriptor buffer
+
+        uint32_t ArraySize = 0; // size of the binding array, if it is dynamic, this is the max size
+        
+        vk::ShaderStageFlags StageFlags = vk::ShaderStageFlagBits::eAll;
+
+        // if this is non-zero, the array is dynamic and this is the size of the dynamic array
+        // or in other words, the size of the array that p*** is pointing to
+        uint32_t DynamicArraySize = 0; 
+
+        // all of these are 64 bit pointers, so we can use a union
+        union
+        {
+            // for normal buffers, eg uniform buffers, storage buffers
+            // we only need the device address and size, so those fields must be set 
+            AllocatedBuffer* pResources = nullptr;
+            
+            // for image samplers, combined image samplers
+            AccessibleImage* pImages;
+
+            // for acceleration structures
+            vk::DeviceAddress* pAccelerationStructures;
+
+            // for storage texel buffers
+            AllocatedTexelBuffer* pTexelBuffers;
+        };
+        
+
 
         vk::DescriptorSetLayoutBinding GetLayoutBinding() const
         {
-            vk::DescriptorSetLayoutBinding binding;
-            binding.setBinding(Binding);
-            binding.setDescriptorCount(DescriptorCount);
-            binding.setDescriptorType(Type);
-            binding.setStageFlags(StageFlags);
-            return binding;
+            return vk::DescriptorSetLayoutBinding()
+                .setBinding(Binding)
+                .setDescriptorType(Type)
+                .setDescriptorCount(ArraySize)
+                .setStageFlags(StageFlags);
         }
 
-        vk::DescriptorBufferInfo GetBufferInfo(uint32_t descriptorIndex = 0) const
+        // only one a
+        vk::DeviceAddress GetAccelerationStructure( uint32_t resourceIndex = 0) const
         {
-            return vk::DescriptorBufferInfo()
-                .setBuffer(reinterpret_cast<vk::Buffer*>(pItems)[descriptorIndex]) // index into array of buffers
-                .setOffset(0)
-                .setRange(VK_WHOLE_SIZE);
+            return pAccelerationStructures[resourceIndex];
         }
 
-        vk::DescriptorImageInfo GetImageInfo(uint32_t descriptorIndex = 0, vk::ImageLayout imgLayout = vk::ImageLayout::eGeneral) const
+        vk::DescriptorAddressInfoEXT GetTexelAddressinfo(uint32_t resourceIndex = 0) const
+        {
+            return vk::DescriptorAddressInfoEXT()
+                .setRange(pTexelBuffers[resourceIndex].Buffer.Size)
+                .setFormat(pTexelBuffers[resourceIndex].Format)
+                .setAddress(pTexelBuffers[resourceIndex].Buffer.DevAddress);
+        }
+
+        vk::DescriptorAddressInfoEXT GetAddressInfo(uint32_t resourceIndex = 0) const
+        {
+            auto addressInfo = vk::DescriptorAddressInfoEXT()
+                .setRange(pResources[resourceIndex].Size)
+                .setFormat(vk::Format::eUndefined);
+
+            switch (Type)
+            {
+            case vk::DescriptorType::eUniformBuffer:
+                addressInfo.address = pResources[resourceIndex].DevAddress;
+                break;
+            case vk::DescriptorType::eStorageBuffer:
+                addressInfo.address = pResources[resourceIndex].DevAddress;
+                break;
+            case vk::DescriptorType::eAccelerationStructureKHR:
+                addressInfo.address = pResources[resourceIndex].DevAddress;
+                break;
+            case vk::DescriptorType::eStorageImage:
+                addressInfo.address = pResources[resourceIndex].DevAddress;
+                break;
+            }
+
+            return addressInfo;
+        }
+
+        vk::DescriptorImageInfo GetImageInfo(uint32_t resourceIndex = 0) const
         {
             return vk::DescriptorImageInfo()
-                .setImageLayout(imgLayout)
-                .setImageView(reinterpret_cast<vk::ImageView*>(pItems)[descriptorIndex]); // index into array of image views
+                .setImageView(pImages[resourceIndex].View)
+                .setImageLayout(pImages[resourceIndex].Layout);
         }
 
-        vk::WriteDescriptorSetAccelerationStructureKHR GetAccelerationStructureInfo(uint32_t descriptorIndex = 0, uint32_t count = 1)
+    
+        vk::DescriptorBufferInfo GetBufferInfo(uint32_t resourceIndex = 0) const
         {
-            return vk::WriteDescriptorSetAccelerationStructureKHR()
-                .setAccelerationStructureCount(1) 
-                .setPAccelerationStructures(reinterpret_cast<vk::AccelerationStructureKHR*>(pItems));
+            return vk::DescriptorBufferInfo()
+                .setBuffer(pResources[resourceIndex].Buffer)
+                .setRange(pResources[resourceIndex].Size);
         }
-
-        uint32_t Binding;
-        vk::DescriptorType Type;
-        vk::ShaderStageFlags StageFlags;
-        uint32_t DescriptorCount = 1;
-
-        // pointer to the actual item, eg. a vk::Image, vk::Buffer, etc.
-        // if DescriptorCount > 1, this is a pointer to an array of items
-        void* pItems = nullptr; 
         
-        vk::DescriptorBindingFlagBits mFlags;
-
-        bool DynamicArray = false;
-
-    };
-
-    struct DescriptorSet
-    {
-        DescriptorSet() = default;
-        DescriptorSet(vk::DescriptorSet set, vk::DescriptorSetLayout layout, const std::vector<DescriptorItem>& items)
-            : Set(set), Layout(layout), Items(std::move(items))
-        {
-        }
-
-        // returns a write descriptor set for the given binding
-        // user has to fill the type of descriptor and the actual item
-        vk::WriteDescriptorSet GetWriteDescriptorSets(vk::DescriptorType type , uint32_t binding, uint32_t writeCount = 1, uint32_t writeStartIndex = 0) const
-        {
-            return vk::WriteDescriptorSet()
-                .setDstSet(Set)
-                .setDstBinding(binding)
-                .setDescriptorType(type)
-                .setDescriptorCount(writeCount)
-                .setDstArrayElement(writeStartIndex);
-        }
-
-        vk::DescriptorSet Set;
-        vk::DescriptorSetLayout Layout;
-        std::vector<DescriptorItem> Items;
     };
 
 

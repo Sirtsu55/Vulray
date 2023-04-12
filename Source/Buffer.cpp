@@ -1,23 +1,29 @@
 #include "Vulray/Buffer.h"
 #include "Vulray/VulrayDevice.h"
 
+
 namespace vr
 {
 
-    ImageAllocation VulrayDevice::CreateImage(
+    AllocatedImage VulrayDevice::CreateImage(
     const vk::ImageCreateInfo& imgInfo,
     VmaAllocationCreateFlags flags)    
     {
-        ImageAllocation outImage;
+        AllocatedImage outImage;
         VmaAllocationCreateInfo allocInf = {};
         allocInf.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
         allocInf.flags = flags;
 
-        auto result = (vk::Result)vmaCreateImage(mVMAllocator, (VkImageCreateInfo*)&imgInfo, &allocInf, (VkImage*)&outImage.Image, &outImage.Allocation, nullptr);
+        VmaAllocationInfo allocationInfo = {};
+
+        auto result = (vk::Result)vmaCreateImage(mVMAllocator, (VkImageCreateInfo*)&imgInfo, &allocInf, (VkImage*)&outImage.Image, &outImage.Allocation, &allocationInfo);
         if(result != vk::Result::eSuccess)
         {
             VULRAY_FLOG_ERROR("Failed to create Image: {0}", vk::to_string(result));
         }
+
+        outImage.Size = allocationInfo.size;
+
         return outImage;
     }
 
@@ -27,7 +33,7 @@ namespace vr
         vk::BufferUsageFlags bufferUsage,
         uint32_t alignment)
     {
-        AllocatedBuffer outBuffer;
+        AllocatedBuffer outBuffer = {};
 
         VmaAllocationCreateInfo allocInf = {};
         allocInf.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
@@ -71,6 +77,36 @@ namespace vr
             vk::BufferUsageFlagBits::eAccelerationStructureBuildInputReadOnlyKHR);
     }
 
+    DescriptorBuffer VulrayDevice::CreateDescriptorBuffer(vk::DescriptorSetLayout layout,
+            std::vector<DescriptorItem>& items,
+            DescriptorBufferType type,
+            uint32_t setCount)
+    {
+        DescriptorBuffer outBuffer = {};
+
+        uint32_t offset = 0;
+        vk::BufferUsageFlags usageFlags = (vk::BufferUsageFlagBits)type; // DescriptorBufferType is a vulkan buffer usage flag enum
+
+        vk::DeviceSize size = mDevice.getDescriptorSetLayoutSizeEXT(layout, mDynLoader);
+
+
+        // create a buffer that is big enough to hold all the descriptor sets and with the proper alignment
+        outBuffer.Buffer = CreateBuffer(size * setCount, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT, usageFlags, mDescriptorBufferProperties.descriptorBufferOffsetAlignment);
+
+        // fill the offsets to the items
+        for (auto& item : items)
+        {
+            uint32_t offset = mDevice.getDescriptorSetLayoutBindingOffsetEXT(layout, item.Binding, mDynLoader);
+            item.BindingOffset = offset;
+        }
+
+        outBuffer.SetCount = setCount;
+        outBuffer.SingleDescriptorSize = size;
+        outBuffer.Type = type;
+
+        return outBuffer;
+    }
+
     void VulrayDevice::DestroyBuffer(AllocatedBuffer &buffer)
     {
         vmaDestroyBuffer(mVMAllocator, buffer.Buffer, buffer.Allocation);
@@ -79,12 +115,14 @@ namespace vr
         buffer.DevAddress = 0;
     }
 
-    void VulrayDevice::DestroyImage(ImageAllocation& img)
+    void VulrayDevice::DestroyImage(AllocatedImage& img)
     {
         vmaDestroyImage(mVMAllocator, img.Image, img.Allocation);
         img.Image = nullptr;
         img.Allocation = nullptr;
     }
+
+
 
     void VulrayDevice::UpdateBuffer(AllocatedBuffer alloc, void *data, const vk::DeviceSize size, uint32_t offset)
     {

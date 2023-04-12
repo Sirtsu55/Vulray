@@ -30,9 +30,10 @@ namespace vr
     struct DescriptorItem
     {
         //constructor to initialize all fields
-        DescriptorItem(uint32_t binding, vk::DescriptorType type, vk::ShaderStageFlags stageFlags, uint32_t ArraySize, void* pItems)
+        DescriptorItem(uint32_t binding, vk::DescriptorType type, vk::ShaderStageFlags stageFlags, uint32_t ArraySize, void* pItems, uint32_t dynamicArraySize = 0)
             : Type(type), Binding(binding), BindingOffset(0), ArraySize(ArraySize), StageFlags(stageFlags),
-            pResources(reinterpret_cast<AllocatedBuffer*>(pItems)) // even if the item isn't a buffer, we can use this field since its a union and a 64-bit address
+            pResources(reinterpret_cast<AllocatedBuffer*>(pItems)), // even if the item isn't a buffer, we can use this field since its a union and a 64-bit address
+            DynamicArraySize(dynamicArraySize) 
         {
         }
 
@@ -42,9 +43,13 @@ namespace vr
 
         uint32_t BindingOffset = 0; // binding offset is filled in when creating the descriptor buffer
 
-        uint32_t ArraySize = 0; // size of the pointers array, eg 1 for a single uniform buffer or 10 for an array of 10 uniform buffers
+        uint32_t ArraySize = 0; // size of the binding array, if it is dynamic, this is the max size
         
         vk::ShaderStageFlags StageFlags = vk::ShaderStageFlagBits::eAll;
+
+        // if this is non-zero, the array is dynamic and this is the size of the dynamic array
+        // or in other words, the size of the array that p*** is pointing to
+        uint32_t DynamicArraySize = 0; 
 
         // all of these are 64 bit pointers, so we can use a union
         union

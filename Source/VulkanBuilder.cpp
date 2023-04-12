@@ -118,6 +118,17 @@ namespace vr
         physSelector.add_required_extension_features(descbufferFeatures);
 
         PhysicalDeviceFeatures12.bufferDeviceAddress = true;
+        PhysicalDeviceFeatures12.descriptorIndexing = true;
+        PhysicalDeviceFeatures12.descriptorBindingVariableDescriptorCount = true;
+        PhysicalDeviceFeatures12.descriptorBindingPartiallyBound = true;
+        PhysicalDeviceFeatures12.runtimeDescriptorArray = true;
+        
+        PhysicalDeviceFeatures12.shaderSampledImageArrayNonUniformIndexing = true;
+        PhysicalDeviceFeatures12.shaderStorageBufferArrayNonUniformIndexing = true;
+        PhysicalDeviceFeatures12.shaderStorageImageArrayNonUniformIndexing = true;
+        PhysicalDeviceFeatures12.shaderUniformBufferArrayNonUniformIndexing = true;
+        PhysicalDeviceFeatures12.shaderUniformTexelBufferArrayNonUniformIndexing = true;
+        PhysicalDeviceFeatures12.shaderStorageTexelBufferArrayNonUniformIndexing = true;
 
         physSelector.set_required_features(PhysicalDeviceFeatures10);
         physSelector.set_required_features_11(PhysicalDeviceFeatures11);

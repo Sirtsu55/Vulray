@@ -162,10 +162,31 @@ namespace vr
         // 2. the pointers should point to an array of DescriptorItem::count elements
         // 3. If there are n descriptor sets in the buffer, the setIndexInBuffer should be used to specify the nth set to update
         // 4. If there are multiple descriptor sets in the buffer, they MUST have the same layout
+        // mappedData is the pointer to the mapped data of the buffer, if it is null, the buffer will be mapped and unmapped
+
         void UpdateDescriptorBuffer(DescriptorBuffer& buffer,
             const std::vector<DescriptorItem>& items,
             DescriptorBufferType type,
-            uint32_t setIndexInBuffer = 0);
+            uint32_t setIndexInBuffer = 0,
+            void* pMappedData = nullptr);
+
+        // Updates the descriptor buffer with the single descriptor item including all the elements in the array
+        void UpdateDescriptorBuffer(DescriptorBuffer& buffer,
+            const DescriptorItem& item,
+            DescriptorBufferType type,
+            uint32_t setIndexInBuffer = 0,
+            void* pMappedData = nullptr);
+
+        // Updates the descriptor buffer with one element of the descriptor item 
+        // Conditions are the same as the other UpdateDescriptorBuffer function
+        // itemIndex is the index of the descriptor item in the layout, so DescriptorItem::p***[itemIndex] has to be valid
+        // mappedData is the pointer to the mapped data of the buffer, if it is null, the buffer will be mapped and unmapped
+        void UpdateDescriptorBuffer(DescriptorBuffer& buffer,
+            const DescriptorItem& item,
+            uint32_t itemIndex,
+            DescriptorBufferType type,
+            uint32_t setIndexInBuffer = 0,
+            void* pMappedData = nullptr);
 
         // Binds the descriptor buffer to the command buffer
         // returns the buffer indices that were bound

@@ -22,6 +22,7 @@ namespace vr
         VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME,
         VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME,
         VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME,
+        VK_EXT_DESCRIPTOR_BUFFER_EXTENSION_NAME,
         VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME // required by accel struct extension
     };
 
@@ -108,23 +109,15 @@ namespace vr
             .setAccelerationStructure(true)
             .setDescriptorBindingAccelerationStructureUpdateAfterBind(true);
 
+        auto descbufferFeatures = vk::PhysicalDeviceDescriptorBufferFeaturesEXT()
+            .setDescriptorBuffer(true)
+            .setDescriptorBufferImageLayoutIgnored(true);
+
         physSelector.add_required_extension_features(raytracingFeatures);
         physSelector.add_required_extension_features(accelFeatures);
+        physSelector.add_required_extension_features(descbufferFeatures);
 
         PhysicalDeviceFeatures12.bufferDeviceAddress = true;
-        PhysicalDeviceFeatures12.descriptorIndexing = true;
-        PhysicalDeviceFeatures12.runtimeDescriptorArray = true;
-        PhysicalDeviceFeatures12.descriptorBindingPartiallyBound = true;
-        PhysicalDeviceFeatures12.descriptorBindingVariableDescriptorCount = true;
-        PhysicalDeviceFeatures12.shaderSampledImageArrayNonUniformIndexing = true;
-        PhysicalDeviceFeatures12.shaderStorageImageArrayNonUniformIndexing = true;
-        PhysicalDeviceFeatures12.shaderStorageBufferArrayNonUniformIndexing = true;
-        PhysicalDeviceFeatures12.shaderStorageImageArrayNonUniformIndexing = true;
-
-        PhysicalDeviceFeatures12.descriptorBindingStorageImageUpdateAfterBind = true;
-        PhysicalDeviceFeatures12.descriptorBindingStorageBufferUpdateAfterBind = true;
-        PhysicalDeviceFeatures12.descriptorBindingSampledImageUpdateAfterBind = true;
-        PhysicalDeviceFeatures12.descriptorBindingUniformBufferUpdateAfterBind = true;
 
         physSelector.set_required_features(PhysicalDeviceFeatures10);
         physSelector.set_required_features_11(PhysicalDeviceFeatures11);

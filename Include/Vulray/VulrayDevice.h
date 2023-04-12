@@ -28,6 +28,8 @@ namespace vr
 
         vk::PhysicalDeviceAccelerationStructurePropertiesKHR GetAccelerationStructureFeatures() const { return mAccelProperties; }
 
+        vk::PhysicalDeviceDescriptorBufferPropertiesEXT GetDescriptorBufferProperties() const { return mDescriptorBufferProperties; } 
+
         //--------------------------------------------------------------------------------
         // Command Buffer functions
         //--------------------------------------------------------------------------------
@@ -77,7 +79,6 @@ namespace vr
         //Adds barrier to the command buffer to ensure the acceleration structure is built before other acceleration structures are built
         void AddAccelerationBuildBarrier(vk::CommandBuffer cmdBuf);
 
-
         void DestroyBLAS(BLASHandle& blas);
 
         void DestroyTLAS(TLASHandle& tlas);
@@ -89,7 +90,7 @@ namespace vr
         //Buffer functions
         //--------------------------------------------------------------------------------
 
-        [[nodiscard]] ImageAllocation CreateImage(
+        [[nodiscard]] AllocatedImage CreateImage(
             const vk::ImageCreateInfo& imgInfo,
             VmaAllocationCreateFlags flags);
 
@@ -100,6 +101,16 @@ namespace vr
             uint32_t alignment = 0);
 
         [[nodiscard]] AllocatedBuffer CreateInstanceBuffer(uint32_t instanceCount);
+
+        // Creates a buffer for storing the descriptor sets
+        // Furthermore it also gives a binding offset for each descriptor item
+        // setCount is the number of descriptor sets that will fit in the buffer
+        // Conditions(not checked by Vulray):
+        // 1. ALl of the descriptor items in the layout should be of the same type
+        [[nodiscard]] DescriptorBuffer CreateDescriptorBuffer(vk::DescriptorSetLayout layout,
+            std::vector<DescriptorItem>& items,
+            DescriptorBufferType type,
+            uint32_t setCount = 1);
 
         //Uploads data to a buffer, via mapping the buffer and memcpy
         void UpdateBuffer(AllocatedBuffer alloc, void* data, const vk::DeviceSize size, uint32_t offset = 0);
@@ -114,7 +125,7 @@ namespace vr
         
         void DestroyBuffer(AllocatedBuffer& buffer);
 
-        void DestroyImage(ImageAllocation & img);
+        void DestroyImage(AllocatedImage & img);
 
 
 
@@ -145,14 +156,39 @@ namespace vr
 
         [[nodiscard]] vk::DescriptorSetLayout CreateDescriptorSetLayout(const std::vector<DescriptorItem> &bindings);
 
-        [[nodiscard]] vk::DescriptorPool CreateDescriptorPool(const std::vector<vk::DescriptorPoolSize>& poolSizes, vk::DescriptorPoolCreateFlags flags, uint32_t maxSets);
+        // Updates the descriptor buffer with the descriptor items in the set
+        // Conditions(not checked by Vulray):
+        // 1. For each element in the items vector, the buffer will be updated with the given data in DescriptorItem::pImageViews/pResources pointer
+        // 2. the pointers should point to an array of DescriptorItem::count elements
+        // 3. If there are n descriptor sets in the buffer, the setIndexInBuffer should be used to specify the nth set to update
+        // 4. If there are multiple descriptor sets in the buffer, they MUST have the same layout
+        void UpdateDescriptorBuffer(DescriptorBuffer& buffer,
+            const std::vector<DescriptorItem>& items,
+            DescriptorBufferType type,
+            uint32_t setIndexInBuffer = 0);
 
-        //if maxVariableDescriptors is 0, it will create a descriptor set without variable descriptors
-        [[nodiscard]] vk::DescriptorSet AllocateDescriptorSet(vk::DescriptorPool pool, vk::DescriptorSetLayout layout, uint32_t maxVariableDescriptors = 0);
+        // Binds the descriptor buffer to the command buffer
+        // returns the buffer indices that were bound
+        // the buffer indices are used to offet the buffer to the right descriptor set 
+        [[nodiscard]] std::vector<uint32_t> BindDescriptorBuffer(const std::vector<DescriptorBuffer>& buffers, vk::CommandBuffer cmdBuf);
 
-        void UpdateDescriptorSet(const std::vector<vk::WriteDescriptorSet>& writes);
+        void BindDescriptorSet(
+            vk::PipelineLayout layout,
+            uint32_t set,
+            uint32_t bufferIndex,   // set index is the index of the buffer that was returned by BindDescriptorBuffer(...)
+            vk::DeviceSize offset,        // offset in the buffer
+            vk::CommandBuffer cmdBuf,
+            vk::PipelineBindPoint bindPoint = vk::PipelineBindPoint::eRayTracingKHR
+        );
 
-        void UpdateDescriptorSet(const vk::WriteDescriptorSet & writes);
+        void BindDescriptorSet(
+            vk::PipelineLayout layout,
+            uint32_t set,
+            std::vector<uint32_t> bufferIndex,   // set index is the index of the buffer that was returned by BindDescriptorBuffer(...)
+            std::vector<vk::DeviceSize> offset,        // offset in the descriptor buffer, that is bound at bufferIndex, to the descriptor set
+            vk::CommandBuffer cmdBuf,
+            vk::PipelineBindPoint bindPoint = vk::PipelineBindPoint::eRayTracingKHR
+        );
 
         //--------------------------------------------------------------------------------
         //SBT functions
@@ -192,6 +228,7 @@ namespace vr
         
         vk::PhysicalDeviceRayTracingPipelinePropertiesKHR mRayTracingProperties;
         vk::PhysicalDeviceAccelerationStructurePropertiesKHR mAccelProperties;
+        vk::PhysicalDeviceDescriptorBufferPropertiesEXT mDescriptorBufferProperties;
 
         VmaAllocator mVMAllocator;
 

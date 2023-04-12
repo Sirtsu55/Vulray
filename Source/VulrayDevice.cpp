@@ -25,6 +25,8 @@ namespace vr
         auto deviceProperties = vk::PhysicalDeviceProperties2KHR();
         deviceProperties.pNext = &mRayTracingProperties;
         mRayTracingProperties.pNext = &mAccelProperties;
+        mAccelProperties.pNext = &mDescriptorBufferProperties;
+        mDescriptorBufferProperties.pNext = nullptr;
 
         mPhysicalDevice.getProperties2KHR(&deviceProperties, mDynLoader);
 

@@ -191,7 +191,7 @@ namespace vr
         // Binds the descriptor buffer to the command buffer
         // returns the buffer indices that were bound
         // the buffer indices are used to offet the buffer to the right descriptor set 
-        [[nodiscard]] std::vector<uint32_t> BindDescriptorBuffer(const std::vector<DescriptorBuffer>& buffers, vk::CommandBuffer cmdBuf);
+        void BindDescriptorBuffer(const std::vector<DescriptorBuffer>& buffers, vk::CommandBuffer cmdBuf);
 
         void BindDescriptorSet(
             vk::PipelineLayout layout,

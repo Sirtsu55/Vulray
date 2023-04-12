@@ -181,7 +181,7 @@ namespace vr
             UnmapBuffer(buffer.Buffer);
     }
 
-    std::vector<uint32_t> VulrayDevice::BindDescriptorBuffer(const std::vector<DescriptorBuffer> &buffers, vk::CommandBuffer cmdBuf)
+    void VulrayDevice::BindDescriptorBuffer(const std::vector<DescriptorBuffer> &buffers, vk::CommandBuffer cmdBuf)
     {
         std::vector<vk::DescriptorBufferBindingInfoEXT> bindingInfos;
         bindingInfos.reserve(buffers.size());
@@ -290,21 +290,21 @@ static size_t GetDescriptorTypeDataSize(vk::DescriptorType type, const vk::Physi
     switch (type)
     {
     case vk::DescriptorType::eUniformBuffer:
-        return vr::AlignUp(bufferProps.uniformBufferDescriptorSize, bufferProps.descriptorBufferOffsetAlignment);
+        return bufferProps.uniformBufferDescriptorSize;
     case vk::DescriptorType::eStorageBuffer:
-        return vr::AlignUp(bufferProps.storageBufferDescriptorSize, bufferProps.descriptorBufferOffsetAlignment);
+        return bufferProps.storageBufferDescriptorSize;
     case vk::DescriptorType::eAccelerationStructureKHR:
-        return vr::AlignUp(bufferProps.accelerationStructureDescriptorSize, bufferProps.descriptorBufferOffsetAlignment);
+        return bufferProps.accelerationStructureDescriptorSize;
     case vk::DescriptorType::eStorageTexelBuffer:
-        return vr::AlignUp(bufferProps.storageTexelBufferDescriptorSize, bufferProps.descriptorBufferOffsetAlignment);
+        return bufferProps.storageTexelBufferDescriptorSize;
     case vk::DescriptorType::eUniformTexelBuffer:
-        return vr::AlignUp(bufferProps.uniformTexelBufferDescriptorSize, bufferProps.descriptorBufferOffsetAlignment);
+        return bufferProps.uniformTexelBufferDescriptorSize;
     case vk::DescriptorType::eStorageImage:
-        return vr::AlignUp(bufferProps.storageImageDescriptorSize, bufferProps.descriptorBufferOffsetAlignment);
+        return bufferProps.storageImageDescriptorSize;
     case vk::DescriptorType::eCombinedImageSampler:
-        return vr::AlignUp(bufferProps.combinedImageSamplerDescriptorSize, bufferProps.descriptorBufferOffsetAlignment);
+        return bufferProps.combinedImageSamplerDescriptorSize;
     case vk::DescriptorType::eSampledImage:
-        return vr::AlignUp(bufferProps.sampledImageDescriptorSize, bufferProps.descriptorBufferOffsetAlignment);
+        return bufferProps.sampledImageDescriptorSize;
     default:
         return 0;
     }

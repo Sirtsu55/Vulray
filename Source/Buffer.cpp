@@ -89,6 +89,7 @@ namespace vr
 
         vk::DeviceSize size = mDevice.getDescriptorSetLayoutSizeEXT(layout, mDynLoader);
 
+        size = AlignUp(size, mDescriptorBufferProperties.descriptorBufferOffsetAlignment);
 
         // create a buffer that is big enough to hold all the descriptor sets and with the proper alignment
         outBuffer.Buffer = CreateBuffer(size * setCount, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT, usageFlags, mDescriptorBufferProperties.descriptorBufferOffsetAlignment);

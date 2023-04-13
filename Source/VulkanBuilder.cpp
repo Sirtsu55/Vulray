@@ -20,6 +20,7 @@ namespace vr
     };
     static std::vector<const char*> RayTracingExtensions = {
         VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME,
+        VK_KHR_RAY_QUERY_EXTENSION_NAME,
         VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME,
         VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME,
         VK_EXT_DESCRIPTOR_BUFFER_EXTENSION_NAME,
@@ -105,6 +106,9 @@ namespace vr
         auto raytracingFeatures = vk::PhysicalDeviceRayTracingPipelineFeaturesKHR()
             .setRayTracingPipeline(true);
 
+        auto rayqueryFeatures = vk::PhysicalDeviceRayQueryFeaturesKHR()
+            .setRayQuery(true);
+
         auto accelFeatures = vk::PhysicalDeviceAccelerationStructureFeaturesKHR()
             .setAccelerationStructure(true)
             .setDescriptorBindingAccelerationStructureUpdateAfterBind(true);
@@ -114,6 +118,7 @@ namespace vr
             .setDescriptorBufferImageLayoutIgnored(true);
 
         physSelector.add_required_extension_features(raytracingFeatures);
+        physSelector.add_required_extension_features(rayqueryFeatures);
         physSelector.add_required_extension_features(accelFeatures);
         physSelector.add_required_extension_features(descbufferFeatures);
 

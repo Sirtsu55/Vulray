@@ -12,7 +12,6 @@ namespace vr
         }
 
         outShader.Module = CreateShaderModule(info.SPIRVCode);
-        outShader.Stage = info.Stage;
 
         return outShader;
     }

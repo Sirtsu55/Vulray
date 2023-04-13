@@ -22,7 +22,7 @@ namespace vr
             shaderStages.push_back(vk::PipelineShaderStageCreateInfo()
                 .setStage(info.RayGenShader.Stage)
                 .setModule(info.RayGenShader.Module)
-                .setPName("main"));
+                .setPName(info.RayGenShader.EntryPoint));
             
             uint32_t rayGenIndex = static_cast<uint32_t>(shaderStages.size() - 1);
 
@@ -41,7 +41,7 @@ namespace vr
             shaderStages.push_back(vk::PipelineShaderStageCreateInfo()
                 .setStage(shader.Stage)
                 .setModule(shader.Module)
-                .setPName("main"));
+                .setPName(shader.EntryPoint));
 
             uint32_t missIndex = static_cast<uint32_t>(shaderStages.size() - 1);
             
@@ -77,7 +77,7 @@ namespace vr
                 shaderStages.push_back(vk::PipelineShaderStageCreateInfo()
                     .setStage(hg.ClosestHitShader.Stage)
                     .setModule(hg.ClosestHitShader.Module)
-                    .setPName("main"));
+                    .setPName(hg.ClosestHitShader.EntryPoint));
 
                 uint32_t closestHitIndex = static_cast<uint32_t>(shaderStages.size() - 1);
                 hitGroup.setClosestHitShader(closestHitIndex);
@@ -90,7 +90,7 @@ namespace vr
                 shaderStages.push_back(vk::PipelineShaderStageCreateInfo()
                     .setStage(hg.AnyHitShader.Stage)
                     .setModule(hg.AnyHitShader.Module)
-                    .setPName("main"));
+                    .setPName(hg.AnyHitShader.EntryPoint));
                 
                 uint32_t anyHitIndex = static_cast<uint32_t>(shaderStages.size() - 1);
                 hitGroup.setAnyHitShader(anyHitIndex);

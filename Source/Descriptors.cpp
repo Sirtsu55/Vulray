@@ -105,6 +105,8 @@ namespace vr
             
             mDevice.getDescriptorEXT(&descGetInfo, dataSize, cursor, mDynLoader); // write to cursor
         }
+        if(pMappedData == nullptr)
+            UnmapBuffer(buffer.Buffer);
     }
 
     void VulrayDevice::UpdateDescriptorBuffer(DescriptorBuffer& buffer,

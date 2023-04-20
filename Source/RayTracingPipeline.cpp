@@ -12,8 +12,8 @@ namespace vr
     {
         std::vector<vk::PipelineShaderStageCreateInfo> shaderStages;
         std::vector<vk::RayTracingShaderGroupCreateInfoKHR> shaderGroups;
-        shaderStages.reserve(1 + info.MissShaders.size() + info.HitGroups.size());
-        shaderGroups.reserve(1 + info.MissShaders.size() + info.HitGroups.size());
+        shaderStages.reserve(1 + info.MissShaders.size() + info.HitGroups.size() + info.CallableShaders.size());
+        shaderGroups.reserve(1 + info.MissShaders.size() + info.HitGroups.size() + info.CallableShaders.size());
         
         //create ray gen shader groups
         {
@@ -106,7 +106,7 @@ namespace vr
             shaderStages.push_back(vk::PipelineShaderStageCreateInfo()
                 .setStage(shader.Stage)
                 .setModule(shader.Module)
-                .setPName("main"));
+                .setPName(shader.EntryPoint));
 
             uint32_t callIndex = static_cast<uint32_t>(shaderStages.size() - 1);
             

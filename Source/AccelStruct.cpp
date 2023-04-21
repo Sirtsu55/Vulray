@@ -1,6 +1,5 @@
 #include "Vulray/AccelStruct.h"
 #include "Vulray/VulrayDevice.h"
-#include "VulrayDevice.h"
 
 
 namespace vr

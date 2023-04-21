@@ -53,26 +53,39 @@ namespace vr
         //Creates a bottom level acceleration structure and gives BuildInfo for the build
         [[nodiscard]] std::pair<BLASHandle, BLASBuildInfo> CreateBLAS(const BLASCreateInfo& info);
 
-        // Builds the acceleration structure and returns the scratch buffer for building
-        // After the build, the scratch buffer should be destroyed by the user or reused for another build
-        // in case the scractch buffer is provided, it will be used for the build and the returned buffer will be the same as the provided one
-        // if the provided scratch buffer is not big enough, a new one will be created and returned
-        // a simple check can be done by comparing the size of the returned buffer
-        // with the size of the provided one to deal with the extra memory allocation
-        [[nodiscard]] AllocatedBuffer BuildBLAS(const  std::vector<BLASBuildInfo>& buildInfos, vk::CommandBuffer cmdBuf, const AllocatedBuffer* scratch = nullptr);
+        // Records the acceleration structure build to the command buffer
+        // it is assumed that the scratch buffer address is set in the build infos
+        // To assure that the scratch buffer is big enough, the user should call CreateScratchBufferBLAS(...)
+        void BuildBLAS(const std::vector<BLASBuildInfo> &buildInfos, vk::CommandBuffer cmdBuf);
 
         // Updates the acceleration structure and returns the scratch buffer for building
         // After the update, user should call BuildBLAS with the returned build infos
         [[nodiscard]] BLASBuildInfo UpdateBLAS(BLASUpdateInfo& updateInfo);
 
+        // Creates a SINGLE scratch buffer for building acceleration structures
+        // Also sets the scratch device address for the build infos
+        // If you want to allocate separate scratch buffer for many BLAS, you need to call this function for each BLAS
+        // If the BLAS is updated regularly, it is recommended to create a separate scratch buffer for the updating BLAS
+        // and use the scratch buffer for the updating
+        // if there are many Dynamic BLASes, it is recommended to create a big scratch buffer for all of them
+        // which are separate from static BLASes
+        [[nodiscard]] AllocatedBuffer CreateScratchBufferBLAS(std::vector<BLASBuildInfo>& buildInfos);
+
+        [[nodiscard]] AllocatedBuffer CreateScratchBufferBLAS(BLASBuildInfo& buildInfo);
+
+        // Creates a SINGLE scratch buffer for building acceleration structure, and set scratch address for the build info
+        // Only one Scratch buffer is created for the TLAS
+        // If you want to allocate scratch buffer for many TLAS, you need to call this function for each TLAS
+        // One large scratch buffer is not created because, there are only few TLASes in a scene
+        [[nodiscard]] AllocatedBuffer CreateScratchBufferTLAS(TLASBuildInfo& buildInfo);
+
         //Creates a top level acceleration structure and gives BuildInfo for the build
         [[nodiscard]] std::pair<TLASHandle, TLASBuildInfo> CreateTLAS(const TLASCreateInfo& info);
 
         // Builds the acceleration structure 
-        // Same rules as BuildBLAS for the scratch buffer
-        [[nodiscard]] AllocatedBuffer BuildTLAS(TLASBuildInfo& buildInfo, 
+        void BuildTLAS(TLASBuildInfo& buildInfo, 
             const AllocatedBuffer& InstanceBuffer, uint32_t instanceCount, 
-            vk::CommandBuffer cmdBuf, const AllocatedBuffer* scratch = nullptr);
+            vk::CommandBuffer cmdBuf);
 
         [[nodiscard]] std::pair<TLASHandle, TLASBuildInfo> UpdateTLAS(TLASHandle& oldTLAS, TLASBuildInfo& oldBuildInfo, bool destroyOld = true);
 

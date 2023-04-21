@@ -1,5 +1,6 @@
 #include "Vulray/AccelStruct.h"
 #include "Vulray/VulrayDevice.h"
+#include "VulrayDevice.h"
 
 
 namespace vr
@@ -87,7 +88,7 @@ namespace vr
     }
 
 
-    AllocatedBuffer VulrayDevice::BuildBLAS(const std::vector<BLASBuildInfo> &buildInfos, vk::CommandBuffer cmdBuf, const AllocatedBuffer* scratch)
+    void VulrayDevice::BuildBLAS(const std::vector<BLASBuildInfo> &buildInfos, vk::CommandBuffer cmdBuf)
     {
         std::vector<vk::AccelerationStructureBuildRangeInfoKHR*> pBuildRangeInfos;
         std::vector<vk::AccelerationStructureBuildGeometryInfoKHR> buildGeometryInfos;
@@ -97,41 +98,20 @@ namespace vr
         // loop over build infos and get scratch sizes
         for(uint32_t i = 0; i < buildInfos.size(); i++)
         {
-            scratchSize += buildInfos[i].BuildSizes.buildScratchSize;
             pBuildRangeInfos.push_back(buildInfos[i].Ranges.get());
             buildGeometryInfos.push_back(buildInfos[i].BuildGeometryInfo);
         }
 
-        AllocatedBuffer scratchBuffer = {};
-
-        if (scratch != nullptr && scratch->Size >= scratchSize)
-            scratchBuffer = *scratch;
-        else
-            scratchBuffer = CreateBuffer(scratchSize, 0,
-                vk::BufferUsageFlagBits::eStorageBuffer,
-                mAccelProperties.minAccelerationStructureScratchOffsetAlignment);
-
-        // loop over build infos and set scratch buffers
-        // this will offset the scratch buffer so that each build info has its own region of the scratch buffer
-        vk::DeviceAddress scratchDataAddr = scratchBuffer.DevAddress;
-
-        for (uint32_t i = 0; i < buildInfos.size(); i++)
-        {
-			buildGeometryInfos[i].setScratchData(scratchBuffer.DevAddress);
-            scratchDataAddr += buildInfos[i].BuildSizes.buildScratchSize;
-		}
-        
         //Build the acceleration structures
         cmdBuf.buildAccelerationStructuresKHR(buildInfos.size(), buildGeometryInfos.data(), pBuildRangeInfos.data(), mDynLoader);
         
 
-        return scratchBuffer;
     }
 
     BLASBuildInfo VulrayDevice::UpdateBLAS(BLASUpdateInfo& updateInfo)
     {
 
-        bool useSourceDeviceAddress = updateInfo.UpdatedGeometryAddresses.size() == 0;
+        bool useSourceDeviceAddress = updateInfo.NewGeometryAddresses.size() == 0;
         
         uint32_t geomSize = updateInfo.SourceBuildInfo.GeometryCount;
 
@@ -149,12 +129,12 @@ namespace vr
                 auto geomType = updateInfo.SourceBuildInfo.Geometries[i].geometryType;
                 if(geomType == vk::GeometryTypeKHR::eTriangles)
                 {
-                    outBuildInfo.Geometries[i].geometry.triangles.vertexData = updateInfo.UpdatedGeometryAddresses[i].VertexDevAddress;
-                    outBuildInfo.Geometries[i].geometry.triangles.indexData = updateInfo.UpdatedGeometryAddresses[i].IndexDevAddress;
+                    outBuildInfo.Geometries[i].geometry.triangles.vertexData = updateInfo.NewGeometryAddresses[i].VertexDevAddress;
+                    outBuildInfo.Geometries[i].geometry.triangles.indexData = updateInfo.NewGeometryAddresses[i].IndexDevAddress;
                 }
                 else if(geomType == vk::GeometryTypeKHR::eAabbs)
                 {
-                    outBuildInfo.Geometries[i].geometry.aabbs.data = updateInfo.UpdatedGeometryAddresses[i].VertexDevAddress;
+                    outBuildInfo.Geometries[i].geometry.aabbs.data = updateInfo.NewGeometryAddresses[i].VertexDevAddress;
                 }
             }
             
@@ -180,6 +160,46 @@ namespace vr
         return outBuildInfo;
     }
 
+    AllocatedBuffer VulrayDevice::CreateScratchBufferBLAS(std::vector<BLASBuildInfo> &buildInfos)
+    {
+        uint32_t scratchSize = 0;
+        // loop over build infos and get scratch sizes
+        for (auto& info : buildInfos)
+        {
+            scratchSize += AlignUp(info.BuildSizes.buildScratchSize, (uint64_t)mAccelProperties.minAccelerationStructureScratchOffsetAlignment);
+        }
+
+        auto outScratchBuffer = CreateBuffer(scratchSize, 0,
+            vk::BufferUsageFlagBits::eStorageBuffer,
+            mAccelProperties.minAccelerationStructureScratchOffsetAlignment);
+
+        // loop over build infos and set scratch buffers
+        // this will offset the scratch buffer so that each build info has its own region of the scratch buffer
+        vk::DeviceAddress scratchDataAddr = outScratchBuffer.DevAddress;
+
+        for (auto& info : buildInfos)
+        {
+			info.BuildGeometryInfo.setScratchData(scratchDataAddr);
+            scratchDataAddr += AlignUp(info.BuildSizes.buildScratchSize, (uint64_t)mAccelProperties.minAccelerationStructureScratchOffsetAlignment);
+		}
+        return outScratchBuffer;
+    }
+
+    AllocatedBuffer VulrayDevice::CreateScratchBufferBLAS(BLASBuildInfo &buildInfo)
+    {
+        uint32_t scratchSize = AlignUp(buildInfo.BuildSizes.buildScratchSize, (uint64_t)mAccelProperties.minAccelerationStructureScratchOffsetAlignment);
+
+        auto outScratchBuffer = CreateBuffer(scratchSize, 0,
+            vk::BufferUsageFlagBits::eStorageBuffer,
+            mAccelProperties.minAccelerationStructureScratchOffsetAlignment);
+
+        // loop over build infos and set scratch buffers
+        // this will offset the scratch buffer so that each build info has its own region of the scratch buffer
+        vk::DeviceAddress scratchDataAddr = outScratchBuffer.DevAddress;
+
+        buildInfo.BuildGeometryInfo.setScratchData(scratchDataAddr);
+        return outScratchBuffer;
+    }
     //--------------------------------------------------------------------------------------
     // TLAS FUCNTIONS
     //--------------------------------------------------------------------------------------
@@ -248,35 +268,20 @@ namespace vr
         return std::make_pair(outAccel, outBuildInfo);
     }
 
-    AllocatedBuffer VulrayDevice::BuildTLAS(TLASBuildInfo& buildInfo, const AllocatedBuffer& InstanceBuffer, uint32_t instanceCount, vk::CommandBuffer cmdBuf, const AllocatedBuffer* scratch)
+    void VulrayDevice::BuildTLAS(TLASBuildInfo& buildInfo, 
+            const AllocatedBuffer& InstanceBuffer, uint32_t instanceCount, 
+            vk::CommandBuffer cmdBuf)
     {
 
         buildInfo.RangeInfo.primitiveCount = instanceCount;
 
         buildInfo.Geometry->geometry.instances.data = InstanceBuffer.DevAddress;
 
-        //Get the scratch buffer size
-        uint32_t scratchSize = buildInfo.BuildSizes.buildScratchSize;
-
-        //Create the scratch buffer
-        AllocatedBuffer scratchBuffer = {};
-
-        if (scratch != nullptr && scratch->Size >= scratchSize)
-            scratchBuffer = *scratch;
-        else
-            scratchBuffer = CreateBuffer(scratchSize, 0,
-                vk::BufferUsageFlagBits::eStorageBuffer,
-                mAccelProperties.minAccelerationStructureScratchOffsetAlignment);
-
-        //Set the scratch buffer
-        buildInfo.BuildGeometryInfo.setScratchData(scratchBuffer.DevAddress);
-
         auto* pBuildRangeInfo = &buildInfo.RangeInfo;
 
         //Build the acceleration structure
         cmdBuf.buildAccelerationStructuresKHR(1, &buildInfo.BuildGeometryInfo, &pBuildRangeInfo, mDynLoader);
 
-        return scratchBuffer;
     }
 
     std::pair<TLASHandle, TLASBuildInfo> VulrayDevice::UpdateTLAS(TLASHandle& oldTLAS, TLASBuildInfo& oldBuildInfo, bool destroyOld)
@@ -308,6 +313,20 @@ namespace vr
 
     }
 
+    AllocatedBuffer VulrayDevice::CreateScratchBufferTLAS(TLASBuildInfo &buildInfo)
+    {
+        //Get the scratch buffer size
+        uint32_t scratchSize = buildInfo.BuildSizes.buildScratchSize;
+
+        //Create the scratch buffer
+        AllocatedBuffer scratchBuffer = CreateBuffer(scratchSize, 0,
+            vk::BufferUsageFlagBits::eStorageBuffer,
+            mAccelProperties.minAccelerationStructureScratchOffsetAlignment);
+
+        //Set the scratch buffer
+        buildInfo.BuildGeometryInfo.setScratchData(scratchBuffer.DevAddress);
+        return scratchBuffer;
+    }
     void VulrayDevice::AddAccelerationBuildBarrier(vk::CommandBuffer cmdBuf)
     {
         //accel build barrier for for next build
@@ -321,6 +340,7 @@ namespace vr
             (vk::DependencyFlagBits)0,
             1, &barrier, 0, nullptr, 0, nullptr);
     }
+
     
     void VulrayDevice::DestroyBLAS(BLASHandle& blas)
     {

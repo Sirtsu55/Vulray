@@ -91,7 +91,7 @@ namespace vr
         // contains the device addresses of the updated geometry
         // usually this will be the same as the source BLAS, but the triangle/aabb data will be different
         // transform buffer must be provided if the source BLAS had a transform buffer, else it must be null
-        std::vector<GeometryDeviceAddress> UpdatedGeometryAddresses = {};
+        std::vector<GeometryDeviceAddress> NewGeometryAddresses = {};
 
     };
 

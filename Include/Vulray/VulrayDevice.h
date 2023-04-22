@@ -69,9 +69,15 @@ namespace vr
         // and use the scratch buffer for the updating
         // if there are many Dynamic BLASes, it is recommended to create a big scratch buffer for all of them
         // which are separate from static BLASes
-        [[nodiscard]] AllocatedBuffer CreateScratchBufferBLAS(std::vector<BLASBuildInfo>& buildInfos);
+        [[nodiscard]] AllocatedBuffer CreateScratchBufferBLAS(std::vector<BLASBuildInfo>& buildInfos, vk::BuildAccelerationStructureModeKHR mode = vk::BuildAccelerationStructureModeKHR::eBuild);
 
-        [[nodiscard]] AllocatedBuffer CreateScratchBufferBLAS(BLASBuildInfo& buildInfo);
+        // Same as above, but for a single BLAS
+        [[nodiscard]] AllocatedBuffer CreateScratchBufferBLAS(BLASBuildInfo& buildInfo, vk::BuildAccelerationStructureModeKHR mode = vk::BuildAccelerationStructureModeKHR::eBuild);
+
+
+        [[nodiscard]] void BindScratchBufferToBuildInfo(vk::DeviceSize scratchBuffer, BLASBuildInfo& buildInfo);
+
+        [[nodiscard]] void BindScratchBufferToBuildInfo(vk::DeviceSize scratchBuffer, TLASBuildInfo& buildInfo);
 
         // Creates a SINGLE scratch buffer for building acceleration structure, and set scratch address for the build info
         // Only one Scratch buffer is created for the TLAS

@@ -352,6 +352,11 @@ namespace vr
         for(auto i : structs.SwapchainImageViews)
             device.destroyImageView(i);
     }
+    void SwapchainBuilder::DestroySwapchainResources(vk::Device device, const SwapchainStructs &structs)
+    {
+        for(auto i : structs.SwapchainImageViews)
+            device.destroyImageView(i);
+    }
 }
 
 static VKAPI_ATTR VkBool32 VKAPI_CALL VulrayVulkanDebugCback(

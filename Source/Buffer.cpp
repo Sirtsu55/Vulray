@@ -23,7 +23,8 @@ namespace vr
         }
 
         outImage.Size = allocationInfo.size;
-
+        outImage.Width = imgInfo.extent.width;
+        outImage.Height = imgInfo.extent.height;
         return outImage;
     }
 

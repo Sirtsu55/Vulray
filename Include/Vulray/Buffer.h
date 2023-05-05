@@ -22,6 +22,8 @@ namespace vr
     {
         VmaAllocation Allocation = nullptr;
         vk::Image Image = nullptr;
+        uint32_t Width = 0;
+        uint32_t Height = 0;
         uint64_t Size = 0;
     };
 

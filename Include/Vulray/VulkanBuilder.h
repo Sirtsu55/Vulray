@@ -126,6 +126,9 @@ namespace vr
 
 		//This destroys the swapchain supplies
 		static void DestroySwapchain(vk::Device device, const SwapchainStructs& structs);
+		// This destroys the swapchain resources, but not the swapchain itself, useful for recreating the swapchain, because the oldswapchain is needed
+		// The client has to destroy the swapchain handle
+		static void DestroySwapchainResources(vk::Device device, const SwapchainStructs& structs);
 
 
 	private:

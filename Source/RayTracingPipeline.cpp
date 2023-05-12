@@ -55,6 +55,7 @@ namespace vr
         //create hit group shader groups
         for(auto& hg : info.HitGroups)
         {
+            // null init hit group, will be filled in later
             auto hitGroup = vk::RayTracingShaderGroupCreateInfoKHR()
                 .setType(vk::RayTracingShaderGroupTypeKHR::eTrianglesHitGroup)
                 .setGeneralShader(VK_SHADER_UNUSED_KHR)
@@ -63,12 +64,11 @@ namespace vr
                 .setIntersectionShader(VK_SHADER_UNUSED_KHR);
 
             //check if both shaders are null
-            if(!hg.ClosestHitShader.Module && !hg.AnyHitShader.Module)
+            if(!hg.ClosestHitShader.Module && !hg.AnyHitShader.Module && !hg.IntersectionShader.Module)
             {
                 VULRAY_LOG_ERROR("CreateRayTracingPipeline: Hit group must have at least one shader");
             }
-
-
+            
             //add closest hit shader if it exists
             if(hg.ClosestHitShader.Module)
             {
@@ -94,6 +94,19 @@ namespace vr
                 
                 uint32_t anyHitIndex = static_cast<uint32_t>(shaderStages.size() - 1);
                 hitGroup.setAnyHitShader(anyHitIndex);
+            }
+            //add intersection shader if it exists
+            if(hg.IntersectionShader.Module)
+            {
+                ErrorCheckShader("Intersection", hg.IntersectionShader, vk::ShaderStageFlagBits::eIntersectionKHR);
+
+                shaderStages.push_back(vk::PipelineShaderStageCreateInfo()
+                    .setStage(hg.IntersectionShader.Stage)
+                    .setModule(hg.IntersectionShader.Module)
+                    .setPName(hg.IntersectionShader.EntryPoint));
+                
+                uint32_t intersectionIndex = static_cast<uint32_t>(shaderStages.size() - 1);
+                hitGroup.setIntersectionShader(intersectionIndex);
             }
 
             shaderGroups.push_back(hitGroup);

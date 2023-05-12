@@ -6,6 +6,7 @@ namespace vr
     {
         Shader ClosestHitShader;
         Shader AnyHitShader;
+        Shader IntersectionShader;
         
     };
 

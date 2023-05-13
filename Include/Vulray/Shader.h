@@ -11,8 +11,7 @@ namespace vr
     struct Shader
     {
         vk::ShaderModule Module = nullptr;
-        vk::ShaderStageFlagBits Stage = vk::ShaderStageFlagBits::eAll;
-        const char* EntryPoint = "main"; //
+        const char* EntryPoint = "main";
     };  
 
 } 

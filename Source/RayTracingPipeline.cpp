@@ -3,7 +3,6 @@
 
 #include <numeric>
 
-static void ErrorCheckShader(const char* shaderName, const vr::Shader& sdr, vk::ShaderStageFlagBits state);
 
 namespace vr
 {
@@ -17,10 +16,8 @@ namespace vr
         
         //create ray gen shader groups
         {
-            ErrorCheckShader("RayGen", info.RayGenShader, vk::ShaderStageFlagBits::eRaygenKHR);
-
             shaderStages.push_back(vk::PipelineShaderStageCreateInfo()
-                .setStage(info.RayGenShader.Stage)
+                .setStage(vk::ShaderStageFlagBits::eRaygenKHR)
                 .setModule(info.RayGenShader.Module)
                 .setPName(info.RayGenShader.EntryPoint));
             
@@ -36,10 +33,8 @@ namespace vr
         //create miss shader groups
         for(auto& shader : info.MissShaders)
         {
-            ErrorCheckShader("Miss", shader, vk::ShaderStageFlagBits::eMissKHR);
-
             shaderStages.push_back(vk::PipelineShaderStageCreateInfo()
-                .setStage(shader.Stage)
+                .setStage(vk::ShaderStageFlagBits::eMissKHR)
                 .setModule(shader.Module)
                 .setPName(shader.EntryPoint));
 
@@ -57,6 +52,7 @@ namespace vr
         {
             // null init hit group, will be filled in later
             auto hitGroup = vk::RayTracingShaderGroupCreateInfoKHR()
+                // assume triangles for now, change if hit group has a custom intersection shader
                 .setType(vk::RayTracingShaderGroupTypeKHR::eTrianglesHitGroup)
                 .setGeneralShader(VK_SHADER_UNUSED_KHR)
                 .setClosestHitShader(VK_SHADER_UNUSED_KHR)
@@ -72,10 +68,9 @@ namespace vr
             //add closest hit shader if it exists
             if(hg.ClosestHitShader.Module)
             {
-                ErrorCheckShader("ClosestHit", hg.ClosestHitShader, vk::ShaderStageFlagBits::eClosestHitKHR);
                 
                 shaderStages.push_back(vk::PipelineShaderStageCreateInfo()
-                    .setStage(hg.ClosestHitShader.Stage)
+                    .setStage(vk::ShaderStageFlagBits::eClosestHitKHR)
                     .setModule(hg.ClosestHitShader.Module)
                     .setPName(hg.ClosestHitShader.EntryPoint));
 
@@ -85,10 +80,8 @@ namespace vr
             //add any hit shader if it exists
             if(hg.AnyHitShader.Module)
             {
-                ErrorCheckShader("AnyHit", hg.AnyHitShader, vk::ShaderStageFlagBits::eAnyHitKHR);
-
                 shaderStages.push_back(vk::PipelineShaderStageCreateInfo()
-                    .setStage(hg.AnyHitShader.Stage)
+                    .setStage(vk::ShaderStageFlagBits::eAnyHitKHR)
                     .setModule(hg.AnyHitShader.Module)
                     .setPName(hg.AnyHitShader.EntryPoint));
                 
@@ -98,14 +91,13 @@ namespace vr
             //add intersection shader if it exists
             if(hg.IntersectionShader.Module)
             {
-                ErrorCheckShader("Intersection", hg.IntersectionShader, vk::ShaderStageFlagBits::eIntersectionKHR);
-
                 shaderStages.push_back(vk::PipelineShaderStageCreateInfo()
-                    .setStage(hg.IntersectionShader.Stage)
+                    .setStage(vk::ShaderStageFlagBits::eIntersectionKHR)
                     .setModule(hg.IntersectionShader.Module)
                     .setPName(hg.IntersectionShader.EntryPoint));
                 
                 uint32_t intersectionIndex = static_cast<uint32_t>(shaderStages.size() - 1);
+                hitGroup.setType(vk::RayTracingShaderGroupTypeKHR::eProceduralHitGroup);
                 hitGroup.setIntersectionShader(intersectionIndex);
             }
 
@@ -114,10 +106,8 @@ namespace vr
         //create callable shader groups
         for(auto& shader : info.CallableShaders)
         {
-            ErrorCheckShader("Callable", shader, vk::ShaderStageFlagBits::eCallableKHR);
-
             shaderStages.push_back(vk::PipelineShaderStageCreateInfo()
-                .setStage(shader.Stage)
+                .setStage(vk::ShaderStageFlagBits::eCallableKHR)
                 .setModule(shader.Module)
                 .setPName(shader.EntryPoint));
 
@@ -176,21 +166,5 @@ namespace vr
     }
 
 
-
-}
-
-static void ErrorCheckShader(const char *shaderName, const vr::Shader &sdr, vk::ShaderStageFlagBits state)
-{
-    //check is module is valid
-    if(!sdr.Module)
-    {
-        VULRAY_FLOG_ERROR("{0} module is invalid!", shaderName);
-        return;
-    }
-    if(sdr.Stage != state)
-    {
-        VULRAY_FLOG_ERROR("{0} Stage is not {1}!", shaderName, vk::to_string(state));
-    }
-  
 
 }

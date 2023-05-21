@@ -208,8 +208,6 @@ namespace vr
             void* pMappedData = nullptr);
 
         // Binds the descriptor buffer to the command buffer
-        // returns the buffer indices that were bound
-        // the buffer indices are used to offet the buffer to the right descriptor set 
         void BindDescriptorBuffer(const std::vector<DescriptorBuffer>& buffers, vk::CommandBuffer cmdBuf);
 
         void BindDescriptorSet(

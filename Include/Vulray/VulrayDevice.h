@@ -64,15 +64,15 @@ namespace vr
 
         // Creates a SINGLE scratch buffer for building acceleration structures
         // Also sets the scratch device address for the build infos
-        // If you want to allocate separate scratch buffer for many BLAS, you need to call this function for each BLAS
+        // This function creates a single scratch buffer for all the BLASes in the build infos
         // If the BLAS is updated regularly, it is recommended to create a separate scratch buffer for the updating BLAS
         // and use the scratch buffer for the updating
         // if there are many Dynamic BLASes, it is recommended to create a big scratch buffer for all of them
         // which are separate from static BLASes
-        [[nodiscard]] AllocatedBuffer CreateScratchBufferBLAS(std::vector<BLASBuildInfo>& buildInfos, vk::BuildAccelerationStructureModeKHR mode = vk::BuildAccelerationStructureModeKHR::eBuild);
+        [[nodiscard]] AllocatedBuffer CreateScratchBufferBLAS(std::vector<BLASBuildInfo>& buildInfos);
 
         // Same as above, but for a single BLAS
-        [[nodiscard]] AllocatedBuffer CreateScratchBufferBLAS(BLASBuildInfo& buildInfo, vk::BuildAccelerationStructureModeKHR mode = vk::BuildAccelerationStructureModeKHR::eBuild);
+        [[nodiscard]] AllocatedBuffer CreateScratchBufferBLAS(BLASBuildInfo& buildInfo);
 
 
         [[nodiscard]] void BindScratchBufferToBuildInfo(vk::DeviceSize scratchBuffer, BLASBuildInfo& buildInfo);

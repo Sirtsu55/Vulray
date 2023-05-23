@@ -26,7 +26,7 @@ namespace vr
 
         vk::PhysicalDeviceRayTracingPipelinePropertiesKHR GetRayTracingProperties() const { return mRayTracingProperties; }
 
-        vk::PhysicalDeviceAccelerationStructurePropertiesKHR GetAccelerationStructureFeatures() const { return mAccelProperties; }
+        vk::PhysicalDeviceAccelerationStructurePropertiesKHR GetAccelerationStructureProperties() const { return mAccelProperties; }
 
         vk::PhysicalDeviceDescriptorBufferPropertiesEXT GetDescriptorBufferProperties() const { return mDescriptorBufferProperties; } 
 

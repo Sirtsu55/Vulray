@@ -36,7 +36,7 @@ namespace vr
             return;
         }
 
-        
+        // Offset to the start of the requested group and apply the opaque handle size for the SBT
         uint32_t offset = (groupIndex * addressRegion->stride) + mRayTracingProperties.shaderGroupHandleSize;
 
         //make sure the data size is not too large

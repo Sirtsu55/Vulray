@@ -6,6 +6,8 @@ namespace vr
     struct AllocatedBuffer
     {
         VmaAllocation Allocation = nullptr;
+
+        // These fields MUST be filled if Vulray is not Allocating/Deallocating
         vk::Buffer Buffer = nullptr;
         vk::DeviceAddress DevAddress = 0;
         uint64_t Size = 0;

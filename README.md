@@ -8,13 +8,11 @@ This library is meant for people wanting to dip their hands into Vulkan Raytraci
 Using the library does precede some basic understanding of Vulkan objects.
 
 ## Features
-- Easily creating Vulkan Device & Instance (~20LoC) ✅
-- Bottom Level Acceleration Build: ✅
-- Bottom Level Acceleration Update: ✅
+- Creating Vulkan Device & Instance  (~20LoC) ✅
+- Bottom Level Acceleration Build/Update: ✅
 - Top Level Acceleration Build/Update: ✅
 - SBT Creation/Update: ✅
-- Descriptor Set Creation/Update: ✅
-- Dynamic Descriptor Creation: ✅
+- Descriptor Set Creation/Update (Descriptor Buffer Extension): ✅
 - Ray Tracing Pipeline Creation: ✅
 - Buffer/Image Creation: ✅
 - Transparent Vulkan objects for more control: ✅
@@ -31,12 +29,11 @@ VulraySamples has examples of using the Vulray Library with explanations: https:
 
 ## Integrating into projects
 - Add as submodule or download the files
-- Add ```add_subdirectory("{folder}/Vulray")``` to your ```CMakeLists.txt```
+- Add ```add_subdirectory("{install_folder}/Vulray")``` to your ```CMakeLists.txt```
 - Add Include Directory ```Vulray/Include/```
-- Add ```{folder}/Vulray/``` as link directory and link with ```Vulray.lib```
+- Add ```{install_folder}/Vulray/``` as link directory and link with ```Vulray.lib```
 - Refer to [VulraySamples](https://github.com/Sirtsu55/VulraySamples
 ) if stuck
   
-
 ## Flexible and Transparent? Yes
 Vulray exposes native Vulkan handles to the user. Some steps of creating objects can be done by the user, as long as the appropriate fields are filled for upcoming steps. For example, user can chose to create an index buffer with their own code, but the Vulray's structure for a Buffer has to be filled by the user manually to continue using Vulray functions.

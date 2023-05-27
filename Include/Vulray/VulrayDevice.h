@@ -62,6 +62,24 @@ namespace vr
         // After the update, user should call BuildBLAS with the returned build infos
         [[nodiscard]] BLASBuildInfo UpdateBLAS(BLASUpdateInfo& updateInfo);
 
+        // Creates a compaction request for the given BLASes
+        [[nodiscard]] CompactionRequest RequestCompaction(const std::vector<BLASHandle*>& sourceBLAS);
+
+        // Returns the sizes required for compaction
+        // If the vector is empty, then the query failed and GetCompactionSizes should be called again after command buffer execution
+        // If the vector is not empty, then the query succeeded and the vector contains the compacted sizes
+        // After this function succesfully returns the sizes, the user should call CompactBLAS 
+        // This function cannot be called again with the same CompactionRequest to get the sizes again after it succesfully returns the values
+        [[nodiscard]] std::vector<uint64_t> GetCompactionSizes(CompactionRequest& request, vk::CommandBuffer cmdBuf);
+
+        // This function compacts the BLASes and returns the compacted BLASes, the source BLASes should be destroyed after the command buffer execution
+        [[nodiscard]] std::vector<BLASHandle> CompactBLAS(CompactionRequest& request, const std::vector<uint64_t>& sizes, vk::CommandBuffer cmdBuf);
+
+        // This function replaces the BLAS handles in the oldBLAS vector with the compacted BLASes respectively and returns a vector of the old BLASes
+        // that should be destroyed after the command buffer execution
+        [[nodiscard]] std::vector<BLASHandle> CompactBLAS(CompactionRequest& request, const std::vector<uint64_t>& sizes,
+            std::vector<BLASHandle*> oldBLAS, vk::CommandBuffer cmdBuf);
+
         // Creates a SINGLE scratch buffer for building acceleration structures
         // Also sets the scratch device address for the build infos
         // This function creates a single scratch buffer for all the BLASes in the build infos
@@ -73,7 +91,6 @@ namespace vr
 
         // Same as above, but for a single BLAS
         [[nodiscard]] AllocatedBuffer CreateScratchBufferBLAS(BLASBuildInfo& buildInfo);
-
 
         [[nodiscard]] void BindScratchBufferToBuildInfo(vk::DeviceSize scratchBuffer, BLASBuildInfo& buildInfo);
 
@@ -98,6 +115,7 @@ namespace vr
         //Adds barrier to the command buffer to ensure the acceleration structure is built before other acceleration structures are built
         void AddAccelerationBuildBarrier(vk::CommandBuffer cmdBuf);
 
+        void DestroyBLAS(std::vector<BLASHandle>& blas);
         void DestroyBLAS(BLASHandle& blas);
 
         void DestroyTLAS(TLASHandle& tlas);

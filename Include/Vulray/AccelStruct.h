@@ -88,12 +88,22 @@ namespace vr
         // The build info for will be reused from the source BLAS
         BLASBuildInfo SourceBuildInfo = {};
 
-        // contains the device addresses of the updated geometry
-        // usually this will be the same as the source BLAS, but the triangle/aabb data will be different
-        // transform buffer must be provided if the source BLAS had a transform buffer, else it must be null
+        // If the updated geometries are in different buffers, NewGeometryAddresses will contain the device addresses of the primitives of 
+        // the updated geometries
+        // This field can be null if the updated geometries are in the same buffers as the source BLAS
+        // The size of the vector must be the same as the number of geometries in the source BLAS
+        // Transform buffer must be provided if the source BLAS had a transform buffer, else it must be null
         std::vector<GeometryDeviceAddress> NewGeometryAddresses = {};
 
     };
+
+    struct CompactionRequest
+    {
+        vk::QueryPool CompactionQueryPool = nullptr;    // Querypool for getting the compacted sizes
+        std::vector<vk::AccelerationStructureKHR> SourceBLAS = {}; // BLASes to be compacted
+    };
+
+
 
     //--------------------------------------------------------------------------------------
     // TLAS STRUCTUES
@@ -126,12 +136,9 @@ namespace vr
     {
         AllocatedBuffer TLASBuffer = {};
 
-        AllocatedBuffer InstancesBuffer = {}; // buffer containing the instances for the TLAS
-        
-        AllocatedBuffer ScratchBuffer = {}; // scratch buffer for building the TLAS will be reused when updating the TLAS
-
         vk::AccelerationStructureKHR AccelerationStructure = nullptr;
-
     };
+
+ 
 
 } 

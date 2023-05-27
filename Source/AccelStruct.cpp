@@ -161,6 +161,120 @@ namespace vr
         return outBuildInfo;
     }
 
+    CompactionRequest VulrayDevice::RequestCompaction(const std::vector<BLASHandle*>& sourceBLAS)
+    {
+        CompactionRequest outRequest = {};
+
+        auto createInfo = vk::QueryPoolCreateInfo()
+            .setQueryType(vk::QueryType::eAccelerationStructureCompactedSizeKHR)
+            .setQueryCount(sourceBLAS.size());
+        for (auto& blas : sourceBLAS)
+            outRequest.SourceBLAS.push_back(blas->AccelerationStructure);
+        outRequest.CompactionQueryPool = mDevice.createQueryPool(createInfo);
+
+        return outRequest;
+    }
+
+    std::vector<uint64_t> VulrayDevice::GetCompactionSizes(CompactionRequest& request, vk::CommandBuffer cmdBuf)
+    {
+        uint32_t blasCount = request.SourceBLAS.size();
+
+        auto [result, values] = mDevice.getQueryPoolResults<uint64_t>(request.CompactionQueryPool,
+            0, blasCount, sizeof(uint64_t) * blasCount, sizeof(uint64_t));
+
+        if(result == vk::Result::eSuccess)
+        {
+            // Destroy the query pool, we don't need it anymore
+            mDevice.destroyQueryPool(request.CompactionQueryPool);
+            request.CompactionQueryPool = nullptr;
+
+            return values;
+        }
+
+        cmdBuf.resetQueryPool(request.CompactionQueryPool, 0, blasCount);
+        
+        cmdBuf.writeAccelerationStructuresPropertiesKHR(request.SourceBLAS,
+            vk::QueryType::eAccelerationStructureCompactedSizeKHR,
+            request.CompactionQueryPool, 0, mDynLoader);
+
+        return std::vector<uint64_t>(); // return empty vector
+    }
+
+    std::vector<BLASHandle> VulrayDevice::CompactBLAS(CompactionRequest& request, const std::vector<uint64_t>& sizes, vk::CommandBuffer cmdBuf)
+    {
+        uint32_t blasCount = request.SourceBLAS.size();
+        std::vector<BLASHandle> newBLASToReturn(blasCount);
+
+        for (uint32_t i = 0; i < blasCount; i++)
+        {
+            // Create buffer
+            AllocatedBuffer compactBuffer = CreateBuffer(sizes[i], 0, vk::BufferUsageFlagBits::eAccelerationStructureStorageKHR);
+
+            // Create the compacted acceleration structure
+            auto createInfo = vk::AccelerationStructureCreateInfoKHR()
+                .setSize(sizes[i])
+                .setType(vk::AccelerationStructureTypeKHR::eBottomLevel)
+                .setBuffer(compactBuffer.Buffer);
+
+            auto compactAccel = mDevice.createAccelerationStructureKHR(createInfo, nullptr, mDynLoader);
+
+            auto copyInfo = vk::CopyAccelerationStructureInfoKHR()
+				.setSrc(request.SourceBLAS[i])
+				.setDst(compactAccel)
+				.setMode(vk::CopyAccelerationStructureModeKHR::eCompact);
+
+            cmdBuf.copyAccelerationStructureKHR(copyInfo, mDynLoader);
+
+            // Set the new acceleration structure
+            newBLASToReturn[i].AccelerationStructure = compactAccel;
+            newBLASToReturn[i].BLASBuffer = compactBuffer;
+            auto addressInfo = vk::AccelerationStructureDeviceAddressInfoKHR()
+                .setAccelerationStructure(newBLASToReturn[i].AccelerationStructure);
+            newBLASToReturn[i].BLASBuffer.DevAddress = mDevice.getAccelerationStructureAddressKHR(addressInfo, mDynLoader);
+        }
+        return newBLASToReturn;
+    }
+
+    std::vector<BLASHandle> VulrayDevice::CompactBLAS(CompactionRequest& request, const std::vector<uint64_t>& sizes,
+        std::vector<BLASHandle*> oldBLAS, vk::CommandBuffer cmdBuf)
+    {
+        uint32_t blasCount = request.SourceBLAS.size();
+        std::vector<BLASHandle> oldBLASToReturn(blasCount);
+
+        for (uint32_t i = 0; i < blasCount; i++)
+        {
+            // Create buffer
+            AllocatedBuffer compactBuffer = CreateBuffer(sizes[i], 0, vk::BufferUsageFlagBits::eAccelerationStructureStorageKHR);
+
+            // Create the compacted acceleration structure
+            auto createInfo = vk::AccelerationStructureCreateInfoKHR()
+                .setSize(sizes[i])
+                .setType(vk::AccelerationStructureTypeKHR::eBottomLevel)
+                .setBuffer(compactBuffer.Buffer);
+
+            auto compactAccel = mDevice.createAccelerationStructureKHR(createInfo, nullptr, mDynLoader);
+
+            auto copyInfo = vk::CopyAccelerationStructureInfoKHR()
+                .setSrc(request.SourceBLAS[i])
+                .setDst(compactAccel)
+                .setMode(vk::CopyAccelerationStructureModeKHR::eCompact);
+
+            cmdBuf.copyAccelerationStructureKHR(copyInfo, mDynLoader);
+
+            // store the old acceleration structure
+            oldBLASToReturn[i].AccelerationStructure = oldBLAS[i]->AccelerationStructure;
+            oldBLASToReturn[i].BLASBuffer = oldBLAS[i]->BLASBuffer;
+            auto addressInfo = vk::AccelerationStructureDeviceAddressInfoKHR()
+				.setAccelerationStructure(oldBLASToReturn[i].AccelerationStructure);
+            oldBLASToReturn[i].BLASBuffer.DevAddress = mDevice.getAccelerationStructureAddressKHR(addressInfo, mDynLoader);
+
+            // replace 
+            oldBLAS[i]->AccelerationStructure = compactAccel;
+            oldBLAS[i]->BLASBuffer = compactBuffer;
+        }
+        return oldBLASToReturn;
+    }
+
     AllocatedBuffer VulrayDevice::CreateScratchBufferBLAS(std::vector<BLASBuildInfo> &buildInfos)
     {
         uint32_t scratchSize = 0;
@@ -364,7 +478,15 @@ namespace vr
             1, &barrier, 0, nullptr, 0, nullptr);
     }
 
-    
+    void VulrayDevice::DestroyBLAS(std::vector<BLASHandle>& blas)
+    {
+        for (auto& b : blas)
+        {
+            mDevice.destroyAccelerationStructureKHR(b.AccelerationStructure, nullptr, mDynLoader);
+            DestroyBuffer(b.BLASBuffer);
+        }
+    }
+
     void VulrayDevice::DestroyBLAS(BLASHandle& blas)
     {
         mDevice.destroyAccelerationStructureKHR(blas.AccelerationStructure, nullptr, mDynLoader);

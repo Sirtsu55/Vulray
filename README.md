@@ -11,11 +11,11 @@ Using the library does precede some basic understanding of Vulkan objects.
 - Creating Vulkan Device & Instance  (~20LoC) ✅
 - Bottom Level Acceleration Build/Update: ✅
 - Top Level Acceleration Build/Update: ✅
+- BLAS Compaction: ✅
+- Ray Tracing Pipeline Creation: ✅
 - SBT Creation/Update: ✅
 - Descriptor Set Creation/Update (Descriptor Buffer Extension): ✅
-- Ray Tracing Pipeline Creation: ✅
 - Buffer/Image Creation: ✅
-- Transparent Vulkan objects for more control: ✅
 
 ## Getting Started ...
 

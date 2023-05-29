@@ -95,10 +95,10 @@ struct GeometryData
     struct BLASUpdateInfo
     {
         /// @brief Indicates the destination BLAS which is getting updated
-        BLASHandle* DestinationBLAS = {};
+        BLASHandle* SourceBLAS = {};
 
         /// @brief This is the build info that was given when creating the destination BLAS, which will be reused
-        BLASBuildInfo DestinationBuildInfo = {};
+        BLASBuildInfo SourceBuildInfo = {};
 
         /// @brief If the updated geometries are in different buffers, NewGeometryAddresses will contain the device addresses of the primitives
         /// @note This field can be null if the updated geometries are in the same buffers as the source BLAS

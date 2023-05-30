@@ -22,7 +22,7 @@ namespace vr
         vk::DeviceAddress IndexDevAddress = {}; //For triangles, if building AABBs, this should be null, and will be ignored
 
         //Buffer containing the transform for the geometry, if this is null, the geometry will use the identity matrix
-        vk::DeviceAddress TransformBuffer = {};
+        vk::DeviceAddress TransformDevAddress = {};
     };
 
 
@@ -77,7 +77,7 @@ namespace vr
     struct BLASHandle
     {
         vk::AccelerationStructureKHR AccelerationStructure = nullptr;
-        AllocatedBuffer BLASBuffer = {};
+        AllocatedBuffer Buffer = {};
     };
 
     struct BLASUpdateInfo
@@ -134,7 +134,7 @@ namespace vr
 
     struct TLASHandle
     {
-        AllocatedBuffer TLASBuffer = {};
+        AllocatedBuffer Buffer = {};
 
         vk::AccelerationStructureKHR AccelerationStructure = nullptr;
     };

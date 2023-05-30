@@ -63,7 +63,7 @@ namespace vr
             mDynLoader); // This will fill in the size requirements
 
         //Create the buffer for the acceleration structure
-        outAccel.BLASBuffer = CreateBuffer(outBuildInfo.BuildSizes.accelerationStructureSize, 
+        outAccel.Buffer = CreateBuffer(outBuildInfo.BuildSizes.accelerationStructureSize, 
             0, // no flags for VMA
             vk::BufferUsageFlagBits::eAccelerationStructureStorageKHR);
         
@@ -71,13 +71,13 @@ namespace vr
         //Create the acceleration structure
         auto createInfo = vk::AccelerationStructureCreateInfoKHR()
             .setType(vk::AccelerationStructureTypeKHR::eBottomLevel)
-            .setBuffer(outAccel.BLASBuffer.Buffer)
+            .setBuffer(outAccel.Buffer.Buffer)
             .setSize(outBuildInfo.BuildSizes.accelerationStructureSize);
         
         outAccel.AccelerationStructure = mDevice.createAccelerationStructureKHR(createInfo, nullptr, mDynLoader);
 
         //Get the address of the acceleration structure, because it may vary from getBufferDeviceAddress(...)
-        outAccel.BLASBuffer.DevAddress = mDevice.getAccelerationStructureAddressKHR(vk::AccelerationStructureDeviceAddressInfoKHR()
+        outAccel.Buffer.DevAddress = mDevice.getAccelerationStructureAddressKHR(vk::AccelerationStructureDeviceAddressInfoKHR()
             .setAccelerationStructure(outAccel.AccelerationStructure), mDynLoader);
             
         // Fill in the build info with the acceleration structure
@@ -227,10 +227,10 @@ namespace vr
 
             // Set the new acceleration structure
             newBLASToReturn[i].AccelerationStructure = compactAccel;
-            newBLASToReturn[i].BLASBuffer = compactBuffer;
+            newBLASToReturn[i].Buffer = compactBuffer;
             auto addressInfo = vk::AccelerationStructureDeviceAddressInfoKHR()
                 .setAccelerationStructure(newBLASToReturn[i].AccelerationStructure);
-            newBLASToReturn[i].BLASBuffer.DevAddress = mDevice.getAccelerationStructureAddressKHR(addressInfo, mDynLoader);
+            newBLASToReturn[i].Buffer.DevAddress = mDevice.getAccelerationStructureAddressKHR(addressInfo, mDynLoader);
         }
         return newBLASToReturn;
     }
@@ -263,14 +263,14 @@ namespace vr
 
             // store the old acceleration structure
             oldBLASToReturn[i].AccelerationStructure = oldBLAS[i]->AccelerationStructure;
-            oldBLASToReturn[i].BLASBuffer = oldBLAS[i]->BLASBuffer;
+            oldBLASToReturn[i].Buffer = oldBLAS[i]->Buffer;
             auto addressInfo = vk::AccelerationStructureDeviceAddressInfoKHR()
 				.setAccelerationStructure(oldBLASToReturn[i].AccelerationStructure);
-            oldBLASToReturn[i].BLASBuffer.DevAddress = mDevice.getAccelerationStructureAddressKHR(addressInfo, mDynLoader);
+            oldBLASToReturn[i].Buffer.DevAddress = mDevice.getAccelerationStructureAddressKHR(addressInfo, mDynLoader);
 
             // replace 
             oldBLAS[i]->AccelerationStructure = compactAccel;
-            oldBLAS[i]->BLASBuffer = compactBuffer;
+            oldBLAS[i]->Buffer = compactBuffer;
         }
         return oldBLASToReturn;
     }
@@ -374,7 +374,7 @@ namespace vr
             mDynLoader); 
         
         //Create the buffer for the acceleration structure
-        outAccel.TLASBuffer = CreateBuffer(outBuildInfo.BuildSizes.accelerationStructureSize, 
+        outAccel.Buffer = CreateBuffer(outBuildInfo.BuildSizes.accelerationStructureSize, 
             0, // no flags for VMA
             vk::BufferUsageFlagBits::eAccelerationStructureStorageKHR);
         
@@ -382,12 +382,12 @@ namespace vr
         //Create the acceleration structure
         auto createInfo = vk::AccelerationStructureCreateInfoKHR()
             .setType(vk::AccelerationStructureTypeKHR::eTopLevel)
-            .setBuffer(outAccel.TLASBuffer.Buffer)
+            .setBuffer(outAccel.Buffer.Buffer)
             .setSize(outBuildInfo.BuildSizes.accelerationStructureSize);
         
         outAccel.AccelerationStructure = mDevice.createAccelerationStructureKHR(createInfo, nullptr, mDynLoader);
 
-        outAccel.TLASBuffer.DevAddress = mDevice.getAccelerationStructureAddressKHR(vk::AccelerationStructureDeviceAddressInfoKHR()
+        outAccel.Buffer.DevAddress = mDevice.getAccelerationStructureAddressKHR(vk::AccelerationStructureDeviceAddressInfoKHR()
             .setAccelerationStructure(outAccel.AccelerationStructure), mDynLoader);
 
         // Fill in the build info with the acceleration structure
@@ -426,12 +426,12 @@ namespace vr
 
         auto createInfo = vk::AccelerationStructureCreateInfoKHR()
             .setType(vk::AccelerationStructureTypeKHR::eTopLevel)
-            .setBuffer(outAccel.TLASBuffer.Buffer)
+            .setBuffer(outAccel.Buffer.Buffer)
             .setSize(outBuildInfo.BuildSizes.accelerationStructureSize);
 
         outAccel.AccelerationStructure = mDevice.createAccelerationStructureKHR(createInfo, nullptr, mDynLoader);
 
-        outAccel.TLASBuffer.DevAddress = mDevice.getAccelerationStructureAddressKHR(vk::AccelerationStructureDeviceAddressInfoKHR()
+        outAccel.Buffer.DevAddress = mDevice.getAccelerationStructureAddressKHR(vk::AccelerationStructureDeviceAddressInfoKHR()
             .setAccelerationStructure(outAccel.AccelerationStructure), mDynLoader);
 
         outBuildInfo.BuildGeometryInfo.setDstAccelerationStructure(outAccel.AccelerationStructure);
@@ -483,20 +483,20 @@ namespace vr
         for (auto& b : blas)
         {
             mDevice.destroyAccelerationStructureKHR(b.AccelerationStructure, nullptr, mDynLoader);
-            DestroyBuffer(b.BLASBuffer);
+            DestroyBuffer(b.Buffer);
         }
     }
 
     void VulrayDevice::DestroyBLAS(BLASHandle& blas)
     {
         mDevice.destroyAccelerationStructureKHR(blas.AccelerationStructure, nullptr, mDynLoader);
-        DestroyBuffer(blas.BLASBuffer);
+        DestroyBuffer(blas.Buffer);
     }
 
     void VulrayDevice::DestroyTLAS(TLASHandle &tlas)
     {
         mDevice.destroyAccelerationStructureKHR(tlas.AccelerationStructure, nullptr, mDynLoader);
-        DestroyBuffer(tlas.TLASBuffer);
+        DestroyBuffer(tlas.Buffer);
     }
 
     void VulrayDevice::DestroyAccelerationStructure(const vk::AccelerationStructureKHR &accel)
@@ -518,7 +518,7 @@ namespace vr
                 .setMaxVertex(geom.PrimitiveCount * 3) // 3 vertices per triangle
                 .setIndexType(geom.IndexFormat)
                 .setIndexData(geom.DataAddresses.IndexDevAddress)
-                .setTransformData(geom.DataAddresses.TransformBuffer));
+                .setTransformData(geom.DataAddresses.TransformDevAddress));
         }
         case vk::GeometryTypeKHR::eAabbs:
         {

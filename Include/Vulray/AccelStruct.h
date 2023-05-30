@@ -20,7 +20,7 @@ namespace vr
         vk::DeviceAddress IndexDevAddress = {};
 
         /// @brief Buffer containing the transform for the geometry, if this is null, the geometry will use the identity matrix
-        vk::DeviceAddress TransformBuffer = {};
+        vk::DeviceAddress TransformDevAddress = {};
     };
 
 
@@ -89,7 +89,7 @@ struct GeometryData
         vk::AccelerationStructureKHR AccelerationStructure = nullptr;
 
         /// @brief Buffer containing the acceleration structure
-        AllocatedBuffer BLASBuffer = {};
+        AllocatedBuffer Buffer = {};
     };
 
     struct BLASUpdateInfo
@@ -161,7 +161,7 @@ struct GeometryData
         vk::AccelerationStructureKHR AccelerationStructure = nullptr;
 
         /// @brief Buffer containing the acceleration structure
-        AllocatedBuffer TLASBuffer = {};
+        AllocatedBuffer Buffer = {};
     };
 
  

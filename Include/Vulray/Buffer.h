@@ -33,6 +33,7 @@ namespace vr
     struct AccessibleImage
     {
         vk::ImageView View = nullptr;
+        vk::Sampler Sampler = nullptr;
         vk::ImageLayout Layout = vk::ImageLayout::eUndefined;
     };
 

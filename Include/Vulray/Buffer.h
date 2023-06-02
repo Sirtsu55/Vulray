@@ -55,6 +55,9 @@ namespace vr
         /// @brief The image view of the image
         vk::ImageView View = nullptr;
 
+        /// @brief Optional sampler for the image
+        vk::Sampler Sampler = nullptr;
+
         /// @brief The image layout of the image
         vk::ImageLayout Layout = vk::ImageLayout::eUndefined;
     };

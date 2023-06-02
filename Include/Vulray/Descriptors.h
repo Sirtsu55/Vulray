@@ -166,7 +166,8 @@ namespace vr
         vk::DescriptorImageInfo GetImageInfo(uint32_t resourceIndex = 0) const
         {
             return vk::DescriptorImageInfo()
-                .setImageView(pImages[resourceIndex].View)
+                .setImageView(pImages[resourceIndex].View ? pImages[resourceIndex].View : vk::ImageView())
+                .setSampler(pImages[resourceIndex].Sampler ? pImages[resourceIndex].Sampler : vk::Sampler())
                 .setImageLayout(pImages[resourceIndex].Layout);
         }
 

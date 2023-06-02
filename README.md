@@ -1,6 +1,6 @@
 # Vulray - Raytracing Simplified
 
-<img src=https://user-images.githubusercontent.com/65868911/229463845-60a57bbd-4e80-4f1b-930e-e90a0569b7e1.jpg width="800" height="400">
+<img src=https://user-images.githubusercontent.com/65868911/229463845-60a57bbd-4e80-4f1b-930e-e90a0569b7e1.jpg width="auto" height="auto">
 
 ## Introduction
 Vulray is a library to simplify Vulkan Raytracing.

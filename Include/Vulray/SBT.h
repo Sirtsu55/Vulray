@@ -2,6 +2,7 @@
 
 namespace vr
 {
+    /// @brief Contains all shaders that will be used in a hit group of an SBT
     struct HitGroup
     {
         Shader ClosestHitShader;
@@ -10,6 +11,7 @@ namespace vr
         
     };
 
+    /// @brief Structure that defines a Shader Binding Table that can be used to trace rays
     struct SBTBuffer
     {
         AllocatedBuffer RayGenBuffer;
@@ -28,6 +30,8 @@ namespace vr
         vk::StridedDeviceAddressRegionKHR CallableRegion = {};
     };
 
+    /// @brief Contains all the shaders that will be used in a shader binding table and the shader record size for each shader type
+    /// This structure is used to build the SBTBuffer and the pipeline
     struct ShaderBindingTable
     {
         Shader RayGenShader;
@@ -40,6 +44,7 @@ namespace vr
         uint32_t CallableShaderRecordSize = 0; //size of each callable shader record
     };
 
+    /// @brief Enum that defines the type of shader in the shader binding table
     enum class ShaderGroup : uint8_t
     {
         RayGen = 0,

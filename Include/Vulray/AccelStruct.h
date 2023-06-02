@@ -44,7 +44,7 @@ struct GeometryData
         /// @brief Number of primitives in the geometry, such as triangles or AABBs
         uint32_t PrimitiveCount = 0;
 
-        ///@brief Flags for the geometry
+        ///@brief Flags for the geometry, Default is eOpaque
         vk::GeometryFlagsKHR Flags = vk::GeometryFlagBitsKHR::eOpaque; 
     };
 
@@ -58,8 +58,8 @@ struct GeometryData
         /// @note All the geometries must be of the same type, either triangles or AABBs
         std::vector<GeometryData> Geometries;
 
-        /// @brief Flags for the acceleration structure
-        /// @note The flags must be appropriately set for future use, e.g., compaction, update
+        /// @brief Flags for the acceleration structure, Default is ePreferFastTrace
+        /// @note The flags must be appropriately set for future use, e.g., compaction, update, etc.
         vk::BuildAccelerationStructureFlagsKHR Flags = vk::BuildAccelerationStructureFlagBitsKHR::ePreferFastTrace;
     };
 
@@ -131,7 +131,7 @@ struct GeometryData
         /// @brief Device address of the instance buffer
         vk::DeviceAddress InstanceDevAddress = {};
 
-        /// @brief Flags for the acceleration structure
+        /// @brief Flags for the acceleration structure, Default is ePreferFastTrace
         vk::BuildAccelerationStructureFlagsKHR Flags = vk::BuildAccelerationStructureFlagBitsKHR::ePreferFastTrace;
     };
 

@@ -19,7 +19,7 @@ namespace vr
         auto result = (vk::Result)vmaCreateImage(mVMAllocator, (VkImageCreateInfo*)&imgInfo, &allocInf, (VkImage*)&outImage.Image, &outImage.Allocation, &allocationInfo);
         if(result != vk::Result::eSuccess)
         {
-            VULRAY_FLOG_ERROR("Failed to create Image: {0}", vk::to_string(result));
+            VULRAY_FLOG_ERROR("Failed to create Image: %s", vk::to_string(result));
         }
 
         outImage.Size = allocationInfo.size;
@@ -61,7 +61,7 @@ namespace vr
         }
         if(result != vk::Result::eSuccess)
         {
-            VULRAY_FLOG_ERROR("Failed to create buffer: {}", vk::to_string(result));
+            VULRAY_FLOG_ERROR("Failed to create buffer: %s", vk::to_string(result));
             return outBuffer;
         }
 

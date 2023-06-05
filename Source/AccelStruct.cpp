@@ -18,10 +18,10 @@ namespace vr
         std::vector<uint32_t> maxPrimitiveCounts(geomSize);
 
         // create a unique pointer to the array of geometries
-        outBuildInfo.Geometries = std::make_shared<vk::AccelerationStructureGeometryKHR[]>(geomSize); 
+        outBuildInfo.Geometries = std::make_unique_for_overwrite<vk::AccelerationStructureGeometryKHR[]>(geomSize); 
         outBuildInfo.GeometryCount = geomSize;
 
-        outBuildInfo.Ranges = std::make_shared<vk::AccelerationStructureBuildRangeInfoKHR[]>(geomSize);
+        outBuildInfo.Ranges = std::make_unique_for_overwrite<vk::AccelerationStructureBuildRangeInfoKHR[]>(geomSize);
         outBuildInfo.RangesCount = geomSize; 
 
         for (size_t i = 0; i < geomSize; i++)

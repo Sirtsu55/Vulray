@@ -71,15 +71,19 @@ struct GeometryData
         /// @brief Contains the build info for the acceleration structure
         vk::AccelerationStructureBuildGeometryInfoKHR BuildGeometryInfo = {};
 
+
+        // The following are shared_ptr, to avoid std::vector reallocation when copied around
+        // We could use std::vector, but it expects the function to be noexcept,
+        // which reverts to copying, because the functions can throw exceptions
+
         /// @brief Geometries that are included in the acceleration structure
-        /// @note This is a shared pointer to avoid reallocation when the vector is resized
         std::shared_ptr<vk::AccelerationStructureGeometryKHR[]> Geometries = nullptr;
 
         uint32_t GeometryCount = 0;
 
         /// @brief Build ranges info for building the acceleration structure
         std::shared_ptr<vk::AccelerationStructureBuildRangeInfoKHR[]> Ranges = nullptr;
-
+        
         uint32_t RangesCount = 0;
     };
 

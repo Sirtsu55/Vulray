@@ -3,7 +3,7 @@
 #include "Vulray/SBT.h"
 #include "Vulray/AccelStruct.h"
 #include "Vulray/Descriptors.h"
-
+#include "Vulray/Denoise/Denoiser.h"
 
 namespace vr
 {

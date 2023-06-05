@@ -9,7 +9,6 @@
 #include <format>
 
 
-
 #include <vulkan/vulkan.hpp>
 #include <vk_mem_alloc.h>
 
@@ -19,7 +18,6 @@
 #include "Vulray/SBT.h"
 #include "Vulray/Descriptors.h"
 #include "Vulray/VulrayDevice.h"
-#include "Vulray/VulkanBuilder.h"
 
 
 #define VULRAY_LOG_STREAM std::cerr

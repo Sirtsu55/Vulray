@@ -1,4 +1,4 @@
-#include "Vulray/VulkanBuilder.h"
+#include "Vulray/VulkanBuilder/VulkanBuilder.h"
 #include "VkBootstrap.h"
 
 static VKAPI_ATTR VkBool32 VKAPI_CALL VulrayVulkanDebugCback(

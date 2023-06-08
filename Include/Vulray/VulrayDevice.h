@@ -4,7 +4,6 @@
 #include "Vulray/AccelStruct.h"
 #include "Vulray/Descriptors.h"
 
-
 namespace vr
 {
 

@@ -6,3 +6,7 @@
 	path = Vendor/VulkanMemoryAllocator
 	url = https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git
 	shallow = true
+[submodule "Vendor/RayTracingDenoiser"]
+	path = Vendor/RayTracingDenoiser
+	url = https://github.com/NVIDIAGameWorks/RayTracingDenoiser.git
+	shallow = true

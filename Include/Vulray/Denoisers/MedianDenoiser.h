@@ -13,7 +13,7 @@ namespace vr
         {
         public:
 
-            MedianDenoiser(vk::Device device, uint32_t height, uint32_t width)
+            MedianDenoiser(vr::VulrayDevice* device, uint32_t height, uint32_t width)
                 : DenoiserInterface(device, height, width) {}
 
             MedianDenoiser() = delete;

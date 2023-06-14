@@ -26,7 +26,10 @@ namespace vr
             DenoiserInterface::Initialize(resources);
 
             // Create the descriptor set layout
-            std::vector<vk::DescriptorSetLayoutBinding> bindings(2);
+            std::vector<vr::DescriptorItem> descriptorItems(2);
+            descriptorItems[0] = vr::DescriptorItem(0, vk::DescriptorType::eCombinedImageSampler, vk::ShaderStageFlagBits::eCompute, 1, &mResources[0].Image);
+            descriptorItems[1] = vr::DescriptorItem(1, vk::DescriptorType::eStorageImage, vk::ShaderStageFlagBits::eCompute, 1, &mResources[1].Image);
+
         }
     }
 }

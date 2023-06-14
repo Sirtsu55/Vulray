@@ -43,7 +43,7 @@ namespace vr
         {
         public:
         
-            DenoiserInterface(vk::Device device, uint32_t height, uint32_t width)
+            DenoiserInterface(vr::VulrayDevice* device, uint32_t height, uint32_t width)
                 : mDevice(device), mHeight(height), mWidth(width) {}
 
             DenoiserInterface() = delete;
@@ -83,7 +83,9 @@ namespace vr
             }
         protected:
             
-            vk::Device mDevice;
+            // Reference to the vulray device that was used to create the denoiser
+            // This is needed to destroy the resources
+            vr::VulrayDevice* mDevice;
             uint32_t mHeight;
             uint32_t mWidth;
             std::vector<Resource> mResources;

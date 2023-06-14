@@ -1,9 +1,4 @@
-﻿# CMakeList.txt : CMake project for Vulray, include source and define
-# project specific logic here.
-#
-
-
-
+﻿
 cmake_minimum_required(VERSION 3.22)
 
 project("Vulray")
@@ -23,11 +18,6 @@ if(VULRAY_BUILD_VULKAN_BUILDER)
 	add_subdirectory("${PROJECT_SOURCE_DIR}/Vendor/vk-bootstrap/")
 endif()
 
-#add Denoiser library
-if(VULRAY_BUILD_DENOISERS)
-	set(NRD_STATIC_LIBRARY ON) # link to static library
-	add_subdirectory("${PROJECT_SOURCE_DIR}/Vendor/RayTracingDenoiser/")
-endif()
 # -------------- Source Files --------------
 
 # Add all source files for minimal build
@@ -38,11 +28,16 @@ if(VULRAY_BUILD_VULKAN_BUILDER)
 	list(APPEND VULRAY_SRC_FILES "${PROJECT_SOURCE_DIR}/Source/VulkanBuilder/VulkanBuilder.cpp")
 endif()
 if(VULRAY_BUILD_DENOISERS)
-	list(APPEND VULRAY_SRC_FILES "${PROJECT_SOURCE_DIR}/Source/Denoiser/Denoiser.cpp")
+	file(GLOB DENOISER_SRC_FILES "${PROJECT_SOURCE_DIR}/Source/Denoisers/*.cpp")
+	list(APPEND VULRAY_SRC_FILES ${DENOISER_SRC_FILES})
+	message ("Denoisers: ${DENOISER_SRC_FILES}")
 endif()
 
 add_library("Vulray" STATIC ${VULRAY_SRC_FILES})
 
+if(VULRAY_BUILD_DENOISERS)
+	target_compile_definitions("Vulray" PUBLIC "VULRAY_BUILD_DENOISERS")
+endif()
 
 # -------------- Header File Options --------------
 
@@ -62,9 +57,6 @@ endif()
 
 # -------------- Link Libraries --------------
 
-if(VULRAY_BUILD_DENOISERS)
-	target_link_libraries("Vulray" PRIVATE "NRD")
-endif()
 if(VULRAY_BUILD_VULKAN_BUILDER)
 	target_link_libraries("Vulray" PRIVATE "vk-bootstrap")
 endif()

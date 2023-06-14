@@ -4,6 +4,11 @@
 #include "Vulray/AccelStruct.h"
 #include "Vulray/Descriptors.h"
 
+#ifdef VULRAY_BUILD_DENOISERS
+#include "Vulray/Denoisers/DenoiserInterface.h"
+#endif
+
+
 namespace vr
 {
 
@@ -33,6 +38,9 @@ namespace vr
 
         /// @brief Get the Vulkan instance handle
         vk::Instance GetInstance() const { return mInstance; }
+
+        /// @brief Get the Physical device properties
+        vk::PhysicalDeviceProperties GetProperties() const { return mDeviceProperties; }
 
         /// @brief Get the Ray Tracing properties of the physical device
         vk::PhysicalDeviceRayTracingPipelinePropertiesKHR GetRayTracingProperties() const { return mRayTracingProperties; }
@@ -460,6 +468,35 @@ namespace vr
         /// @param depth The depth of the image that will be used to dispatch the rays, default is 1
         void DispatchRays(vk::CommandBuffer cmdBuf, const vk::Pipeline rtPipeline, const SBTBuffer& buffer, uint32_t width, uint32_t height, uint32_t depth = 1);
 
+        // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        // @@@@@@@@@@@@@@@@@@@@@@@@@@@ Denoiser Functions @@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+#ifdef VULRAY_BUILD_DENOISERS
+
+        /// @brief Creates a denoiser of type T
+        /// @tparam T The type of the denoiser that will be created - Found in Denoisers namespace. will fail to compile if T is not a denoiser
+        template <typename T, typename std::enable_if<std::is_base_of<Denoise::DenoiserInterface, T>::value, int>::type = 0>
+        vr::Denoiser CreateDenoiser(int width, int height)
+        {
+            return std::make_unique<T>(mDevice, width, height);
+        }
+
+        /// @brief Constructs the resources that will be used by a denoiser: Allocates images, creates image views and samplers.
+        /// @param resources The resources that will be constructed. Image views and samplers are directly written to the resources[i].Image
+        /// @param height The height of the image that will be used by the denoiser
+        /// @param width The width of the image that will be used by the denoiser
+        /// @return The constructed allocated images that will be used by the denoiser.
+        /// The returned images must outlive the denoiser that will use them. Returned images should be destroyed after the denoiser is destroyed.
+        /// @note For any resource that is ResourceType::Output, it will always have eStorage usage
+        [[nodiscard]] std::vector<AllocatedImage> CreateDenoiserResources(
+            std::vector<Denoise::Resource>& resources,
+            uint32_t height,
+            uint32_t width);
+
+#endif
+        
+
     private:
 
 
@@ -469,6 +506,7 @@ namespace vr
         vk::Device mDevice;
         vk::PhysicalDevice mPhysicalDevice;
         
+        vk::PhysicalDeviceProperties mDeviceProperties;
         vk::PhysicalDeviceRayTracingPipelinePropertiesKHR mRayTracingProperties;
         vk::PhysicalDeviceAccelerationStructurePropertiesKHR mAccelProperties;
         vk::PhysicalDeviceDescriptorBufferPropertiesEXT mDescriptorBufferProperties;

@@ -1,8 +1,6 @@
 #include "Vulray/VulrayDevice.h"
 #include "Vulray/Shader.h"
 
-#include <numeric>
-
 
 namespace vr
 {
@@ -138,7 +136,7 @@ namespace vr
             .setFlags(vk::PipelineCreateFlagBits::eDescriptorBufferEXT);
 
         auto pipeline = mDevice.createRayTracingPipelineKHR(nullptr, nullptr, pipelineInf, nullptr, mDynLoader);
-
+        
         if(pipeline.result != vk::Result::eSuccess)
         {
             VULRAY_LOG_ERROR("CreateRayTracingPipeline: Failed to create ray tracing pipeline");    

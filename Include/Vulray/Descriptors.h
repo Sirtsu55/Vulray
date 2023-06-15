@@ -16,7 +16,7 @@ namespace vr
         Sampler = (uint32_t)vk::BufferUsageFlagBits::eSamplerDescriptorBufferEXT,
 
         /// @brief The buffer will store combined image samplers
-        CombinedImageSampler = (uint32_t)(vk::BufferUsageFlagBits::eSamplerDescriptorBufferEXT | vk::BufferUsageFlagBits::eResourceDescriptorBufferEXT)
+        Combined = (uint32_t)(vk::BufferUsageFlagBits::eSamplerDescriptorBufferEXT | vk::BufferUsageFlagBits::eResourceDescriptorBufferEXT)
     };
 
     struct DescriptorBuffer
@@ -51,7 +51,7 @@ namespace vr
         /// @param ArraySize The size of the binding array, if the array is dynamic, this is the max size
         /// @param pItems Pointer to the items that will be stored in the descriptor, this can be a buffer, image, etc. Can be null and set later, but must be set before calling UpdateDescriptorSet(...)
         /// @param dynamicArraySize If this is non-zero, the array is dynamic and this is the size of the array that you want to be used. pItems must have dynamicArraySize many items
-        DescriptorItem(uint32_t binding, vk::DescriptorType type, vk::ShaderStageFlags stageFlags, uint32_t ArraySize, void* pItems, uint32_t dynamicArraySize = 0)
+        DescriptorItem(uint32_t binding, vk::DescriptorType type, vk::ShaderStageFlags stageFlags, uint32_t ArraySize, void* pItems = nullptr, uint32_t dynamicArraySize = 0)
             : Type(type), Binding(binding), BindingOffset(0), ArraySize(ArraySize), StageFlags(stageFlags),
             pResources(reinterpret_cast<AllocatedBuffer*>(pItems)), // even if the item isn't a buffer, we can use this field since its a union and a 64-bit address
             DynamicArraySize(dynamicArraySize) 
@@ -133,29 +133,9 @@ namespace vr
         {
             auto addressInfo = vk::DescriptorAddressInfoEXT()
                 .setRange(pResources[resourceIndex].Size)
-                .setFormat(vk::Format::eUndefined);
+                .setFormat(vk::Format::eUndefined)
+                .setAddress(pResources[resourceIndex].DevAddress);
 
-            switch (Type)
-            {
-            case vk::DescriptorType::eUniformBuffer:
-                addressInfo.address = pResources[resourceIndex].DevAddress;
-                break;
-            case vk::DescriptorType::eStorageBuffer:
-                addressInfo.address = pResources[resourceIndex].DevAddress;
-                break;
-            case vk::DescriptorType::eAccelerationStructureKHR:
-                addressInfo.address = pResources[resourceIndex].DevAddress;
-                break;
-            case vk::DescriptorType::eStorageImage:
-                addressInfo.address = pResources[resourceIndex].DevAddress;
-                break;
-            case vk::DescriptorType::eStorageTexelBuffer:
-                addressInfo.address = pTexelBuffers[resourceIndex].Buffer.DevAddress;
-                break;
-            case vk::DescriptorType::eUniformTexelBuffer:
-                addressInfo.address = pTexelBuffers[resourceIndex].Buffer.DevAddress;
-                break;
-            }
             return addressInfo;
         }
 
@@ -169,6 +149,14 @@ namespace vr
                 .setImageView(pImages[resourceIndex].View ? pImages[resourceIndex].View : vk::ImageView())
                 .setSampler(pImages[resourceIndex].Sampler ? pImages[resourceIndex].Sampler : vk::Sampler())
                 .setImageLayout(pImages[resourceIndex].Layout);
+        }
+
+        /// @brief Gets the sampler of the image
+        /// @param resourceIndex The index of the resource to get the sampler of from the array of resources
+        /// @return The pointer to the sampler of the image
+        vk::Sampler* GetSampler(uint32_t resourceIndex = 0) const
+        {
+            return &pImages[resourceIndex].Sampler;
         }
 
         /// @brief Gets the buffer info of the buffer

@@ -5,14 +5,11 @@
 // These functions extract the addrss info / image info from the descriptor item
 // and bind it to the corresponding pointer in the  DescriptorDataEXT struct
 // they also return the size of the descriptor item
-static void GetAddressOfDescriptorItem(const vr::DescriptorItem& item,
+static void GetInfoOfDescriptorItem(const vr::DescriptorItem& item,
     uint32_t resourceIndex,
     vk::DescriptorAddressInfoEXT* pAddressInfo = nullptr,
-    vk::DescriptorDataEXT* pData = nullptr);
-
-static void GetImageInfoOfDescriptorItem(const vr::DescriptorItem& item,
-    uint32_t resourceIndex,
-    vk::DescriptorImageInfo* pAddressInfo = nullptr,
+    vk::DescriptorImageInfo* pImageInfo = nullptr,
+    vk::Sampler* pSampler = nullptr,
     vk::DescriptorDataEXT* pData = nullptr);
 
 static size_t GetDescriptorTypeDataSize(vk::DescriptorType type, const vk::PhysicalDeviceDescriptorBufferPropertiesEXT& bufferProps);
@@ -88,23 +85,14 @@ namespace vr
 
         auto imageInfo = vk::DescriptorImageInfo(); // in case of image or sampler
 
+        vk::Sampler sampler = nullptr; // in case of sampler
+
         uint32_t dataSize = GetDescriptorTypeDataSize(item.Type, mDescriptorBufferProperties);
 
-        if(type == DescriptorBufferType::Resource)
-        {
-            if(item.Type == vk::DescriptorType::eStorageImage) // storage images are resources, but they need image info
-                GetImageInfoOfDescriptorItem(item, itemIndex, &imageInfo, &descGetInfo.data);
-            else
-                GetAddressOfDescriptorItem(item, itemIndex, &addressInfo, &descGetInfo.data);
+        GetInfoOfDescriptorItem(item, itemIndex, &addressInfo, &imageInfo, &sampler, &descGetInfo.data);
 
-            mDevice.getDescriptorEXT(&descGetInfo, dataSize, cursor, mDynLoader); // write to cursor
-        }
-        else if(type == DescriptorBufferType::Sampler | type == DescriptorBufferType::CombinedImageSampler)
-        {
-            GetImageInfoOfDescriptorItem(item, itemIndex, &imageInfo, &descGetInfo.data);
-            
-            mDevice.getDescriptorEXT(&descGetInfo, dataSize, cursor, mDynLoader); // write to cursor
-        }
+        mDevice.getDescriptorEXT(&descGetInfo, dataSize, cursor, mDynLoader); // write to cursor
+
         if(pMappedData == nullptr)
             UnmapBuffer(buffer.Buffer);
     }
@@ -129,6 +117,7 @@ namespace vr
 
         auto imageInfo = vk::DescriptorImageInfo(); // in case of image or sampler
 
+        vk::Sampler sampler = nullptr; // in case of sampler
 
         for (uint32_t i = 0; i < items.size(); i++)
         {
@@ -141,25 +130,11 @@ namespace vr
 
             for(uint32_t j = 0; j < arraySize; j++)
             {
-                if(type == DescriptorBufferType::Resource)
-                {
-                    if(items[i].Type == vk::DescriptorType::eStorageImage) // storage images are resources, but they need image info
-                        GetImageInfoOfDescriptorItem(items[i], j, &imageInfo, &descGetInfo.data);
-                    else
-                        GetAddressOfDescriptorItem(items[i], j, &addressInfo, &descGetInfo.data);
+                GetInfoOfDescriptorItem(items[i], j, &addressInfo, &imageInfo, &sampler, &descGetInfo.data);
 
-                    mDevice.getDescriptorEXT(&descGetInfo, dataSize, cursor, mDynLoader); // write to cursor
+                mDevice.getDescriptorEXT(&descGetInfo, dataSize, cursor, mDynLoader); // write to cursor
 
-                    cursor += dataSize;
-                }
-                else if(type == DescriptorBufferType::Sampler | type == DescriptorBufferType::CombinedImageSampler)
-                {
-                    GetImageInfoOfDescriptorItem(items[i], j, &imageInfo, &descGetInfo.data);
-                    
-                    mDevice.getDescriptorEXT(&descGetInfo, dataSize, cursor, mDynLoader); // write to cursor
-
-                    cursor += dataSize;
-                }
+                cursor += dataSize;
             }
         }
         // we can unmap the buffer now, because we wrote all the data to it
@@ -232,14 +207,18 @@ namespace vr
 }
 
 
-static void GetAddressOfDescriptorItem(const vr::DescriptorItem& item,
+static void GetInfoOfDescriptorItem(const vr::DescriptorItem& item,
     uint32_t resourceIndex,
     vk::DescriptorAddressInfoEXT* pAddressInfo,
+    vk::DescriptorImageInfo* pImageInfo,
+    vk::Sampler* pSampler,
     vk::DescriptorDataEXT* pData)
 {
-    
     switch (item.Type)
     {
+
+    // Resources
+
     case vk::DescriptorType::eUniformBuffer:
         *pAddressInfo = item.GetAddressInfo(resourceIndex);
         pData->pUniformBuffer = pAddressInfo;
@@ -259,17 +238,12 @@ static void GetAddressOfDescriptorItem(const vr::DescriptorItem& item,
         *pAddressInfo = item.GetTexelAddressinfo(resourceIndex);
         pData->pUniformTexelBuffer = pAddressInfo;
         break;
-        
-    }
-}
 
-static void GetImageInfoOfDescriptorItem(const vr::DescriptorItem& item,
-    uint32_t resourceIndex,
-    vk::DescriptorImageInfo* pImageInfo,
-    vk::DescriptorDataEXT* pData)
-{
-    switch (item.Type)
-    {
+    // Images
+    case vk::DescriptorType::eSampler:
+        pSampler = item.GetSampler(resourceIndex);
+        pData->pSampler = pSampler;
+        break;
     case vk::DescriptorType::eCombinedImageSampler:
         *pImageInfo = item.GetImageInfo(resourceIndex);
         pData->pCombinedImageSampler = pImageInfo;
@@ -303,6 +277,8 @@ static size_t GetDescriptorTypeDataSize(vk::DescriptorType type, const vk::Physi
         return bufferProps.storageImageDescriptorSize;
     case vk::DescriptorType::eCombinedImageSampler:
         return bufferProps.combinedImageSamplerDescriptorSize;
+    case vk::DescriptorType::eSampler:
+        return bufferProps.samplerDescriptorSize;
     case vk::DescriptorType::eSampledImage:
         return bufferProps.sampledImageDescriptorSize;
     default:

@@ -13,8 +13,7 @@ namespace vr
         {
         public:
 
-            MedianDenoiser(vr::VulrayDevice* device, uint32_t height, uint32_t width)
-                : DenoiserInterface(device, height, width) {}
+            MedianDenoiser(vr::VulrayDevice* device, uint32_t width, uint32_t height);
 
             MedianDenoiser() = delete;
             MedianDenoiser(const MedianDenoiser&) = delete;
@@ -23,7 +22,6 @@ namespace vr
 
             std::vector<Resource> GetRequiredResources() override;
 
-            void Initialize(std::vector<Resource>& resources) override;          
         };
     }
 }

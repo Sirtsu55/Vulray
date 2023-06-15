@@ -479,20 +479,8 @@ namespace vr
         template <typename T, typename std::enable_if<std::is_base_of<Denoise::DenoiserInterface, T>::value, int>::type = 0>
         vr::Denoiser CreateDenoiser(int width, int height)
         {
-            return std::make_unique<T>(mDevice, width, height);
+            return std::make_unique<T>(this, width, height);
         }
-
-        /// @brief Constructs the resources that will be used by a denoiser: Allocates images, creates image views and samplers.
-        /// @param resources The resources that will be constructed. Image views and samplers are directly written to the resources[i].Image
-        /// @param height The height of the image that will be used by the denoiser
-        /// @param width The width of the image that will be used by the denoiser
-        /// @return The constructed allocated images that will be used by the denoiser.
-        /// The returned images must outlive the denoiser that will use them. Returned images should be destroyed after the denoiser is destroyed.
-        /// @note For any resource that is ResourceType::Output, it will always have eStorage usage
-        [[nodiscard]] std::vector<AllocatedImage> CreateDenoiserResources(
-            std::vector<Denoise::Resource>& resources,
-            uint32_t height,
-            uint32_t width);
 
 #endif
         

@@ -1,11 +1,12 @@
 
 #include "Vulray/Denoisers/MedianDenoiser.h"
 
+#include "MedianDenoiser.spv.h"
+
 namespace vr
 {
     namespace Denoise
     {
-
         MedianDenoiser::MedianDenoiser(vr::VulrayDevice* device, uint32_t width, uint32_t height)
             : DenoiserInterface(device, width, height)
         {

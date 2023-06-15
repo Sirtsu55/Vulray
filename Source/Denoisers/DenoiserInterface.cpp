@@ -2,7 +2,6 @@
 
 namespace vr
 {
-
     namespace Denoise
     {
 
@@ -10,14 +9,12 @@ namespace vr
         {
             auto vulkanDevice = mDevice->GetDevice();
 
-            for (auto& img : mImages)
-                mDevice->DestroyImage(img);
-
             // lambda to destroy image views and samplers
-            auto destroyImg = [vulkanDevice](Resource& resource)
+            auto destroyImg = [this, vulkanDevice](Resource& resource)
             {
-                vulkanDevice.destroyImageView(resource.View);
-                vulkanDevice.destroySampler(resource.Sampler);
+                vulkanDevice.destroyImageView(resource.AccessImage.View);
+                vulkanDevice.destroySampler(resource.AccessImage.Sampler);
+                mDevice->DestroyImage(resource.AllocImage);
             };
 
             for(auto& resource : mInputResources)
@@ -26,13 +23,15 @@ namespace vr
                 destroyImg(resource);
             for(auto& resource : mInternalResources)
                 destroyImg(resource);
+
+            // Destroy descriptor set layout
+            vulkanDevice.destroyDescriptorSetLayout(mDescriptorSetLayout);
+            mDevice->DestroyBuffer(mDescriptorBuffer.Buffer);
         }
-        void DenoiserInterface::CreateResources(std::vector<Resource> &resources)
+        void DenoiserInterface::CreateResources(std::vector<Resource> &resources, vk::ImageUsageFlags inputUsage, vk::ImageUsageFlags outputUsage)
         {
             auto vulkanDevice = mDevice->GetDevice();
-                
-            mImages.resize(2);
-
+            
             auto maxAnisotropy = mDevice->GetProperties().limits.maxSamplerAnisotropy;
 
             // ALl resources are images
@@ -44,48 +43,46 @@ namespace vr
                 .setArrayLayers(1)
                 .setSamples(vk::SampleCountFlagBits::e1)
                 .setTiling(vk::ImageTiling::eOptimal)
-                .setUsage(vk::ImageUsageFlagBits::eSampled)
                 .setSharingMode(vk::SharingMode::eExclusive)
                 .setInitialLayout(vk::ImageLayout::eUndefined);
                 
             for (auto& resource : resources)
             {
                 imageInfo.format = resource.Format;
-                imageInfo.usage = resource.Usage;
+                imageInfo.usage = resource.Usage | ((int)resource.Type & 0b1 ? inputUsage : outputUsage); // set the usage depending on the type of resource
 
-                if((int)resource.Type & 0b10) // if second bit is set, so it's an output
-                    imageInfo.usage |= vk::ImageUsageFlagBits::eStorage;
-
-                auto& img = mImages.emplace_back(mDevice->CreateImage(imageInfo, VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT));
-
-                resource.Image = img.Image; // Set the image created to the resource
+                resource.AllocImage = mDevice->CreateImage(imageInfo, VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT);
 
                 // Create Image View
                 auto viewInfo = vk::ImageViewCreateInfo()
-                    .setImage(img.Image)
+                    .setImage(resource.AllocImage.Image)
                     .setViewType(vk::ImageViewType::e2D)
                     .setFormat(imageInfo.format)
                     .setSubresourceRange(vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1));
-                resource.View = vulkanDevice.createImageView(viewInfo);
+                resource.AccessImage.View = vulkanDevice.createImageView(viewInfo);
 
-                // Create Sampler
-                auto samplerInfo = vk::SamplerCreateInfo()
-                    .setMagFilter(vk::Filter::eLinear)
-                    .setMinFilter(vk::Filter::eLinear)
-                    .setAddressModeU(vk::SamplerAddressMode::eClampToEdge)
-                    .setAddressModeV(vk::SamplerAddressMode::eClampToEdge)
-                    .setAddressModeW(vk::SamplerAddressMode::eClampToEdge)
-                    .setAnisotropyEnable(true)
-                    .setMaxAnisotropy(maxAnisotropy) // No performance hit
-                    .setBorderColor(vk::BorderColor::eFloatOpaqueWhite)
-                    .setUnnormalizedCoordinates(false)
-                    .setCompareEnable(false)
-                    .setCompareOp(vk::CompareOp::eAlways)
-                    .setMipmapMode(vk::SamplerMipmapMode::eLinear)
-                    .setMipLodBias(0.0f)
-                    .setMinLod(0.0f)
-                    .setMaxLod(1.0f);
-                resource.Sampler = vulkanDevice.createSampler(samplerInfo);
+                // Only create sampler if the resource is sampled
+                if(resource.Usage & vk::ImageUsageFlagBits::eSampled)
+                {
+                    // Create Sampler
+                    auto samplerInfo = vk::SamplerCreateInfo()
+                        .setMagFilter(vk::Filter::eLinear)
+                        .setMinFilter(vk::Filter::eLinear)
+                        .setAddressModeU(vk::SamplerAddressMode::eClampToEdge)
+                        .setAddressModeV(vk::SamplerAddressMode::eClampToEdge)
+                        .setAddressModeW(vk::SamplerAddressMode::eClampToEdge)
+                        .setAnisotropyEnable(true)
+                        .setMaxAnisotropy(maxAnisotropy) // No performance hit
+                        .setBorderColor(vk::BorderColor::eFloatOpaqueWhite)
+                        .setUnnormalizedCoordinates(false)
+                        .setCompareEnable(false)
+                        .setCompareOp(vk::CompareOp::eAlways)
+                        .setMipmapMode(vk::SamplerMipmapMode::eLinear)
+                        .setMipLodBias(0.0f)
+                        .setMinLod(0.0f)
+                        .setMaxLod(1.0f);
+                    resource.AccessImage.Sampler = vulkanDevice.createSampler(samplerInfo);
+                }
 
                 // Add the resource to the correct vector
                 if((int)resource.Type & 0b01) // if first bit is set, so it's an input
@@ -95,8 +92,12 @@ namespace vr
                 else
                     mInternalResources.push_back(resource);
             }
+        }
 
-
+        void DenoiserInterface::CreateDescriptorBuffer()
+        {
+            mDescriptorSetLayout = mDevice->CreateDescriptorSetLayout(mDescriptorItems);
+            mDescriptorBuffer = mDevice->CreateDescriptorBuffer(mDescriptorSetLayout, mDescriptorItems, vr::DescriptorBufferType::Combined);
         }
     }
 

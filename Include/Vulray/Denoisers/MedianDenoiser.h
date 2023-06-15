@@ -19,6 +19,9 @@ namespace vr
             MedianDenoiser(const MedianDenoiser&) = delete;
             ~MedianDenoiser() override = default;
             
+            
+            void Initialize(vk::ImageUsageFlags inputUsage = (vk::ImageUsageFlags)0,
+                vk::ImageUsageFlags outputUsage = (vk::ImageUsageFlags)0) override;
 
             std::vector<Resource> GetRequiredResources() override;
 

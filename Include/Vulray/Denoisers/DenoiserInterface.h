@@ -14,7 +14,6 @@ namespace vr
             // Inputs have first bit set to 1
             // Outputs have second bit set to 1
             
-
             InputGeneral    = 0b00000001,   // General input, so denoiser can be used in any context
 
             OutputFinal     = 0b00000010,   // Output  image
@@ -24,9 +23,8 @@ namespace vr
         {
             Resource() = default;
 
-            vk::Image Image;
-            vk::ImageView View;
-            vk::Sampler Sampler;
+            AllocatedImage AllocImage;
+            AccessibleImage AccessImage;
 
             // Getters
             ResourceType GetType() const { return Type; }
@@ -40,10 +38,9 @@ namespace vr
             ResourceType Type;
             vk::Format Format;
 
-            // Allow the denoiser to access the private members
+            // Allow the denoisers to access the private members
             friend class DenoiserInterface;
             friend class MedianDenoiser;
-
         };
 
         class DenoiserInterface
@@ -59,7 +56,12 @@ namespace vr
             DenoiserInterface() = delete;
             DenoiserInterface(const DenoiserInterface&) = delete;
 
-            virtual std::vector<Resource> GetRequiredResources() {}
+            // Specify any additional image usages that user wants for the input and output images, depending on how they are going to be used, eg transfer source or destination
+            // Internal usage flags will be added automatically
+            virtual void Initialize(vk::ImageUsageFlags inputUsage = (vk::ImageUsageFlags)0,
+                vk::ImageUsageFlags outputUsage = (vk::ImageUsageFlags)0) {};
+
+            virtual std::vector<Resource> GetRequiredResources() { return std::vector<Resource>(); }
 
             virtual const std::vector<Resource>& GetInputResources() const { return mInputResources; }
 
@@ -78,10 +80,15 @@ namespace vr
             std::vector<Resource> mInternalResources;
             std::vector<Resource> mOutputResources;
 
-            std::vector<AllocatedImage> mImages;
-            
-            void CreateResources(std::vector<Resource>& resources);
+            std::vector<DescriptorItem> mDescriptorItems;
+            vk::DescriptorSetLayout mDescriptorSetLayout;
+            DescriptorBuffer mDescriptorBuffer;
 
+
+            void CreateResources(std::vector<Resource>& resources, vk::ImageUsageFlags inputUsage, vk::ImageUsageFlags outputUsage);
+
+            // mDescriptorItems must be populated before calling this function
+            void CreateDescriptorBuffer();
         };
     }
 

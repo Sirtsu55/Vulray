@@ -322,8 +322,9 @@ namespace vr
         /// @param descLayouts The descriptor set layouts that will be used to create the pipeline layout
         /// @param info The ShaderBindingTable that will be used to create the pipeline layout
         /// @param recursionDepth The recursion depth of the ray tracing pipeline
+        /// @param flags The flags that will be used to create the pipeline. If using Vulray's descriptor buffer, this should have the eDescriptorBufferEXT flag.
         /// @return The created pipeline
-        [[nodiscard]] vk::Pipeline CreateRayTracingPipeline(vk::PipelineLayout layout, const ShaderBindingTable& info, uint32_t recursuionDepth);
+        [[nodiscard]] vk::Pipeline CreateRayTracingPipeline(vk::PipelineLayout layout, const ShaderBindingTable& info, uint32_t recursuionDepth, vk::PipelineCreateFlags flags = vk::PipelineCreateFlagBits::eDescriptorBufferEXT );
 
         /// @brief Destroys the shader module
         /// @param shader The shader module that will be destroyed
@@ -420,7 +421,7 @@ namespace vr
         void BindDescriptorSet(
             vk::PipelineLayout layout,
             uint32_t set,
-            std::vector<uint32_t> bufferIndex,   // set index is the index of the buffer that was returned by BindDescriptorBuffer(...)
+            std::vector<uint32_t> bufferIndex,
             std::vector<vk::DeviceSize> offset,  // offset in the descriptor buffer, that is bound at bufferIndex, to the descriptor set
             vk::CommandBuffer cmdBuf,
             vk::PipelineBindPoint bindPoint = vk::PipelineBindPoint::eRayTracingKHR

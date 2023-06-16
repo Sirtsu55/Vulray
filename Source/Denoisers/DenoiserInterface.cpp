@@ -24,9 +24,6 @@ namespace vr
             for(auto& resource : mInternalResources)
                 destroyImg(resource);
 
-            // Destroy descriptor set layout
-            vulkanDevice.destroyDescriptorSetLayout(mDescriptorSetLayout);
-            mDevice->DestroyBuffer(mDescriptorBuffer.Buffer);
         }
         void DenoiserInterface::CreateResources(std::vector<Resource> &resources, vk::ImageUsageFlags inputUsage, vk::ImageUsageFlags outputUsage)
         {
@@ -92,12 +89,6 @@ namespace vr
                 else
                     mInternalResources.push_back(resource);
             }
-        }
-
-        void DenoiserInterface::CreateDescriptorBuffer()
-        {
-            mDescriptorSetLayout = mDevice->CreateDescriptorSetLayout(mDescriptorItems);
-            mDescriptorBuffer = mDevice->CreateDescriptorBuffer(mDescriptorSetLayout, mDescriptorItems, vr::DescriptorBufferType::Combined);
         }
     }
 

@@ -40,7 +40,7 @@ namespace vr
 
             // Allow the denoisers to access the private members
             friend class DenoiserInterface;
-            friend class MedianDenoiser;
+            friend class GaussianBlurDenoiser;
         };
 
         class DenoiserInterface
@@ -67,6 +67,8 @@ namespace vr
 
             virtual const std::vector<Resource>& GetOutputResources() const { return mOutputResources; }
 
+            virtual void Denoise(vk::CommandBuffer cmdBuffer) {};
+
         protected:
             
             // Reference to the vulray device that was used to create the denoiser
@@ -80,15 +82,8 @@ namespace vr
             std::vector<Resource> mInternalResources;
             std::vector<Resource> mOutputResources;
 
-            std::vector<DescriptorItem> mDescriptorItems;
-            vk::DescriptorSetLayout mDescriptorSetLayout;
-            DescriptorBuffer mDescriptorBuffer;
-
-
             void CreateResources(std::vector<Resource>& resources, vk::ImageUsageFlags inputUsage, vk::ImageUsageFlags outputUsage);
 
-            // mDescriptorItems must be populated before calling this function
-            void CreateDescriptorBuffer();
         };
     }
 

@@ -201,6 +201,7 @@ namespace vr
         //create pipeline layout
         return mDevice.createPipelineLayout(vk::PipelineLayoutCreateInfo()
             .setSetLayoutCount(1)
+            .setFlags(vk::PipelineLayoutCreateFlagBits::eIndependentSetsEXT)
             .setPSetLayouts(&descLayout));
     }
 

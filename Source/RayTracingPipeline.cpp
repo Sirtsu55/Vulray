@@ -1,13 +1,11 @@
 #include "Vulray/VulrayDevice.h"
 #include "Vulray/Shader.h"
 
-#include <numeric>
-
 
 namespace vr
 {
 
-    vk::Pipeline VulrayDevice::CreateRayTracingPipeline(vk::PipelineLayout layout, const ShaderBindingTable &info, uint32_t recursuionDepth)
+    vk::Pipeline VulrayDevice::CreateRayTracingPipeline(vk::PipelineLayout layout, const ShaderBindingTable &info, uint32_t recursuionDepth, vk::PipelineCreateFlags flags)
     {
         std::vector<vk::PipelineShaderStageCreateInfo> shaderStages;
         std::vector<vk::RayTracingShaderGroupCreateInfoKHR> shaderGroups;
@@ -135,10 +133,10 @@ namespace vr
             .setPGroups(shaderGroups.data())
             .setMaxPipelineRayRecursionDepth(recursuionDepth) 
             .setLayout(layout)
-            .setFlags(vk::PipelineCreateFlagBits::eDescriptorBufferEXT);
+            .setFlags(flags);
 
         auto pipeline = mDevice.createRayTracingPipelineKHR(nullptr, nullptr, pipelineInf, nullptr, mDynLoader);
-
+        
         if(pipeline.result != vk::Result::eSuccess)
         {
             VULRAY_LOG_ERROR("CreateRayTracingPipeline: Failed to create ray tracing pipeline");    

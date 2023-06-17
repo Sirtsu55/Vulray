@@ -4,6 +4,11 @@
 #include "Vulray/AccelStruct.h"
 #include "Vulray/Descriptors.h"
 
+#ifdef VULRAY_BUILD_DENOISERS
+#include "Vulray/Denoisers/DenoiserInterface.h"
+#endif
+
+
 namespace vr
 {
 
@@ -33,6 +38,9 @@ namespace vr
 
         /// @brief Get the Vulkan instance handle
         vk::Instance GetInstance() const { return mInstance; }
+
+        /// @brief Get the Physical device properties
+        vk::PhysicalDeviceProperties GetProperties() const { return mDeviceProperties; }
 
         /// @brief Get the Ray Tracing properties of the physical device
         vk::PhysicalDeviceRayTracingPipelinePropertiesKHR GetRayTracingProperties() const { return mRayTracingProperties; }
@@ -73,7 +81,7 @@ namespace vr
             vk::ImageLayout newLayout, 
             const vk::ImageSubresourceRange& range,
             vk::CommandBuffer cmdBuf,
-            vk::PipelineStageFlags srcStage = vk::PipelineStageFlagBits::eAllCommands,
+            vk::PipelineStageFlags srcStage = vk::PipelineStageFlagBits::eAllGraphics,
             vk::PipelineStageFlags dstStage = vk::PipelineStageFlagBits::eAllCommands);
 
         // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -314,8 +322,9 @@ namespace vr
         /// @param descLayouts The descriptor set layouts that will be used to create the pipeline layout
         /// @param info The ShaderBindingTable that will be used to create the pipeline layout
         /// @param recursionDepth The recursion depth of the ray tracing pipeline
+        /// @param flags The flags that will be used to create the pipeline. If using Vulray's descriptor buffer, this should have the eDescriptorBufferEXT flag.
         /// @return The created pipeline
-        [[nodiscard]] vk::Pipeline CreateRayTracingPipeline(vk::PipelineLayout layout, const ShaderBindingTable& info, uint32_t recursuionDepth);
+        [[nodiscard]] vk::Pipeline CreateRayTracingPipeline(vk::PipelineLayout layout, const ShaderBindingTable& info, uint32_t recursuionDepth, vk::PipelineCreateFlags flags = vk::PipelineCreateFlagBits::eDescriptorBufferEXT );
 
         /// @brief Destroys the shader module
         /// @param shader The shader module that will be destroyed
@@ -412,7 +421,7 @@ namespace vr
         void BindDescriptorSet(
             vk::PipelineLayout layout,
             uint32_t set,
-            std::vector<uint32_t> bufferIndex,   // set index is the index of the buffer that was returned by BindDescriptorBuffer(...)
+            std::vector<uint32_t> bufferIndex,
             std::vector<vk::DeviceSize> offset,  // offset in the descriptor buffer, that is bound at bufferIndex, to the descriptor set
             vk::CommandBuffer cmdBuf,
             vk::PipelineBindPoint bindPoint = vk::PipelineBindPoint::eRayTracingKHR
@@ -460,6 +469,23 @@ namespace vr
         /// @param depth The depth of the image that will be used to dispatch the rays, default is 1
         void DispatchRays(vk::CommandBuffer cmdBuf, const vk::Pipeline rtPipeline, const SBTBuffer& buffer, uint32_t width, uint32_t height, uint32_t depth = 1);
 
+        // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        // @@@@@@@@@@@@@@@@@@@@@@@@@@@ Denoiser Functions @@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+#ifdef VULRAY_BUILD_DENOISERS
+
+        /// @brief Creates a denoiser of type T
+        /// @tparam T The type of the denoiser that will be created - Found in Denoisers namespace. will fail to compile if T is not a denoiser
+        template <typename T, typename std::enable_if<std::is_base_of<Denoise::DenoiserInterface, T>::value, int>::type = 0>
+        vr::Denoiser CreateDenoiser(int width, int height)
+        {
+            return std::make_unique<T>(this, width, height);
+        }
+
+#endif
+        
+
     private:
 
 
@@ -469,6 +495,7 @@ namespace vr
         vk::Device mDevice;
         vk::PhysicalDevice mPhysicalDevice;
         
+        vk::PhysicalDeviceProperties mDeviceProperties;
         vk::PhysicalDeviceRayTracingPipelinePropertiesKHR mRayTracingProperties;
         vk::PhysicalDeviceAccelerationStructurePropertiesKHR mAccelProperties;
         vk::PhysicalDeviceDescriptorBufferPropertiesEXT mDescriptorBufferProperties;

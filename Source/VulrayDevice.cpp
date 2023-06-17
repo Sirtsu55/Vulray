@@ -30,6 +30,7 @@ namespace vr
 
         mPhysicalDevice.getProperties2KHR(&deviceProperties, mDynLoader);
 
+        mDeviceProperties = mPhysicalDevice.getProperties();
     }
     
 
@@ -51,6 +52,4 @@ namespace vr
     {
         return mDevice.allocateCommandBuffers(vk::CommandBufferAllocateInfo(pool, level, count));
     }
-
-
 }

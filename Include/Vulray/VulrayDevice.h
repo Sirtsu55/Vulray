@@ -81,7 +81,7 @@ namespace vr
             vk::ImageLayout newLayout, 
             const vk::ImageSubresourceRange& range,
             vk::CommandBuffer cmdBuf,
-            vk::PipelineStageFlags srcStage = vk::PipelineStageFlagBits::eAllCommands,
+            vk::PipelineStageFlags srcStage = vk::PipelineStageFlagBits::eAllGraphics,
             vk::PipelineStageFlags dstStage = vk::PipelineStageFlagBits::eAllCommands);
 
         // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@

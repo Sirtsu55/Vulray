@@ -10,7 +10,7 @@ namespace vr
         GaussianBlurDenoiser::GaussianBlurDenoiser(vr::VulrayDevice* device, uint32_t width, uint32_t height)
             : DenoiserInterface(device, width, height)
         {
-
+            mSettings = new Settings();
         }
 
         GaussianBlurDenoiser::~GaussianBlurDenoiser()
@@ -24,6 +24,8 @@ namespace vr
             mDevice->GetDevice().destroyPipelineLayout(mPipelineLayout);
 
             mDevice->GetDevice().destroyShaderModule(mShaderModule);
+
+            delete mSettings;
         }
 
         void GaussianBlurDenoiser::Initialize(vk::ImageUsageFlags inputUsage, vk::ImageUsageFlags outputUsage)
@@ -49,7 +51,7 @@ namespace vr
             auto pushConstantRange = vk::PushConstantRange()
                 .setStageFlags(vk::ShaderStageFlagBits::eCompute)
                 .setOffset(0)
-                .setSize(sizeof(uint32_t) * 4);
+                .setSize(sizeof(PushConstantData));
             vk::PipelineLayoutCreateInfo pipelineLayoutInfo = vk::PipelineLayoutCreateInfo()
                 .setSetLayoutCount(1)
                 .setPSetLayouts(&mDescriptorSetLayout)
@@ -110,11 +112,17 @@ namespace vr
             mDevice->BindDescriptorBuffer({ mDescriptorBuffer }, cmdBuffer);
             mDevice->BindDescriptorSet(mPipelineLayout, 0, 0, 0, cmdBuffer, vk::PipelineBindPoint::eCompute);
 
-            // Push constants
-            uint32_t pushConstants[4] = { mWidth, mHeight, 10, 0 };
-            cmdBuffer.pushConstants(mPipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(uint32_t) * 4, pushConstants);
+            PushConstantData pushData;
+            pushData.Settings.Radius = ((Settings*)mSettings)->Radius;
+            pushData.Settings.Sigma = ((Settings*)mSettings)->Sigma;
+            pushData.Width = mWidth;
+            pushData.Height = mHeight;
 
-            cmdBuffer.dispatch(mWidth / 4, mHeight / 4, 1);
+
+            // Push constants
+            cmdBuffer.pushConstants(mPipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(PushConstantData), &pushData);
+
+            cmdBuffer.dispatch(mWidth / 16, mHeight / 16, 1);
         }
     }
 }

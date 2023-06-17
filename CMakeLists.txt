@@ -91,6 +91,7 @@ if(VULRAY_BUILD_DENOISERS)
 			-T cs_6_5
 			-E ${SHADER_FILENAME}_main
 			-spirv
+			-O3
 			-fspv-target-env=vulkan1.3
 			-Qstrip_debug
 			-Fh "${SHADER_OUTPUT}"

@@ -5,7 +5,8 @@
 namespace vr
 {
 
-    vk::Pipeline VulrayDevice::CreateRayTracingPipeline(vk::PipelineLayout layout, const ShaderBindingTable &info, uint32_t recursuionDepth, vk::PipelineCreateFlags flags)
+    std::pair<std::vector<vk::PipelineShaderStageCreateInfo>, std::vector<vk::RayTracingShaderGroupCreateInfoKHR>> 
+        VulrayDevice::GetShaderStagesAndRayTracingGroups(const ShaderBindingTable& info)
     {
         std::vector<vk::PipelineShaderStageCreateInfo> shaderStages;
         std::vector<vk::RayTracingShaderGroupCreateInfoKHR> shaderGroups;
@@ -118,6 +119,12 @@ namespace vr
                 .setAnyHitShader(VK_SHADER_UNUSED_KHR)
                 .setIntersectionShader(VK_SHADER_UNUSED_KHR));
         }
+        return std::make_pair(std::move(shaderStages), std::move(shaderGroups));
+    }
+
+    vk::Pipeline VulrayDevice::CreateRayTracingPipeline(vk::PipelineLayout layout, const ShaderBindingTable &info, uint32_t recursuionDepth, vk::PipelineCreateFlags flags)
+    {
+        auto [shaderStages, shaderGroups] = GetShaderStagesAndRayTracingGroups(info);
 
         if(recursuionDepth >= mRayTracingProperties.maxRayRecursionDepth)
         {
@@ -143,15 +150,12 @@ namespace vr
             pipeline.value = nullptr;
         }
         
-        return pipeline.value;
-        
+        return pipeline.value;       
     }
-
 
     void VulrayDevice::DispatchRays(vk::CommandBuffer cmdBuf, const vk::Pipeline rtPipeline, const SBTBuffer& buffer, uint32_t width, uint32_t height, uint32_t depth)
     {
         //dispatch rays
-    
         cmdBuf.bindPipeline(vk::PipelineBindPoint::eRayTracingKHR, rtPipeline);
         cmdBuf.traceRaysKHR(
             &buffer.RayGenRegion,
@@ -160,9 +164,5 @@ namespace vr
             &buffer.CallableRegion,
             width, height, depth,
             mDynLoader);
-
     }
-
-
-
 }

@@ -317,6 +317,13 @@ namespace vr
         /// @param descLayouts The descriptor set layouts that will be used to create the pipeline layout
         /// @return The created pipeline layout
         [[nodiscard]] vk::PipelineLayout CreatePipelineLayout(const std::vector<vk::DescriptorSetLayout>& descLayouts);
+        
+        /// @brief Returns the shader stages and shader groups that are constructed from the ShaderBindingTable.
+        /// Useful if wanting to create a pipeline library and link the pipeline library to the pipeline.
+        /// @param info The ShaderBindingTable including the collection of shaders that will be used to create the shader stages and shader groups
+        /// @return The shader stages and shader groups that are constructed from the ShaderBindingTable
+        [[nodiscard]] std::pair<std::vector<vk::PipelineShaderStageCreateInfo>, std::vector<vk::RayTracingShaderGroupCreateInfoKHR>> 
+            GetShaderStagesAndRayTracingGroups(const ShaderBindingTable& info);
 
         /// @brief Creates a pipeline
         /// @param descLayouts The descriptor set layouts that will be used to create the pipeline layout

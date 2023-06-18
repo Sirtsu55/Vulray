@@ -55,7 +55,7 @@ namespace vr
             {
                 uint32_t Width;
                 uint32_t Height;
-                Settings Settings;
+                Settings DenoiserSettings;
             };
         };
     }

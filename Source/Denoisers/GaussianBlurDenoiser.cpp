@@ -25,7 +25,7 @@ namespace vr
 
             mDevice->GetDevice().destroyShaderModule(mShaderModule);
 
-            delete mSettings;
+            delete (Settings*)mSettings;
         }
 
         void GaussianBlurDenoiser::Initialize(vk::ImageUsageFlags inputUsage, vk::ImageUsageFlags outputUsage)
@@ -113,8 +113,8 @@ namespace vr
             mDevice->BindDescriptorSet(mPipelineLayout, 0, 0, 0, cmdBuffer, vk::PipelineBindPoint::eCompute);
 
             PushConstantData pushData;
-            pushData.Settings.Radius = ((Settings*)mSettings)->Radius;
-            pushData.Settings.Sigma = ((Settings*)mSettings)->Sigma;
+            pushData.DenoiserSettings.Radius = ((Settings*)mSettings)->Radius;
+            pushData.DenoiserSettings.Sigma = ((Settings*)mSettings)->Sigma;
             pushData.Width = mWidth;
             pushData.Height = mHeight;
 

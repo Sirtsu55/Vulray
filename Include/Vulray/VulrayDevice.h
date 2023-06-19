@@ -328,28 +328,58 @@ namespace vr
         [[nodiscard]] std::pair<std::vector<vk::PipelineShaderStageCreateInfo>, std::vector<vk::RayTracingShaderGroupCreateInfoKHR>> 
             GetShaderStagesAndRayTracingGroups(const RayTracingShaderCollection& info);
 
-        /// @brief Creates a pipeline
-        /// @param descLayouts The descriptor set layouts that will be used to create the pipeline layout
-        /// @param info The ShaderBindingTable that will be used to create the pipeline layout
-        /// @param recursionDepth The recursion depth of the ray tracing pipeline
-        /// @param flags The flags that will be used to create the pipeline. If using Vulray's descriptor buffer, this should have the eDescriptorBufferEXT flag.
-        /// @return The created pipeline
-        [[nodiscard]] vk::Pipeline CreateRayTracingPipeline(vk::PipelineLayout layout, const ShaderBindingTable& info, uint32_t recursuionDepth, vk::PipelineCreateFlags flags = vk::PipelineCreateFlagBits::eDescriptorBufferEXT);
+        /// @brief Creates a ray tracing pipeline
+        /// @param shaderCollection The shader collection that will be used to create the pipeline.
+        /// The field shaderCollection::CollectionPipeline is not used, because it is not linking
+        /// many pipelines together, it is just creating one pipeline.
+        /// @param settings The settings that will be used to create the pipeline
+        /// @param flags The flags that will be used to create the pipeline, default is eDescriptorBufferEXT
+        /// @param deferredOp The deferred operation that will be used to create the pipeline, default is nullptr
+        /// @return The created ray tracing pipeline and the shader binding table info to create the shader binding table
+        [[nodiscard]] std::pair<vk::Pipeline, ShaderBindingTableInfo> CreateRayTracingPipeline(
+            const RayTracingShaderCollection& shaderCollection,
+            PipelineSettings& settings,
+            vk::PipelineCreateFlags flags = vk::PipelineCreateFlagBits::eDescriptorBufferEXT,
+            vk::DeferredOperationKHR deferredOp = nullptr);
 
+        /// @brief Creates a ray tracing pipeline
+        /// @param shaderCollections The shader collections that will be used to create the pipeline.
+        /// The field shaderCollection::CollectionPipeline must be set, because it is linking many pipelines together. 
+        /// @param settings The settings that will be used to create the pipeline. All the pipelines in the shaderCollections
+        /// must have been created with the same settings.
+        /// @param flags The flags that will be used to create the pipeline, default is eDescriptorBufferEXT
+        /// @param deferredOp The deferred operation that will be used to create the pipeline, default is nullptr
+        /// @return The created ray tracing pipeline and the shader binding table info to create the shader binding table
         [[nodiscard]] std::pair<vk::Pipeline, ShaderBindingTableInfo> CreateRayTracingPipeline(
             const std::vector<RayTracingShaderCollection>& shaderCollections,
             PipelineSettings& settings,
             vk::PipelineCreateFlags flags = vk::PipelineCreateFlagBits::eDescriptorBufferEXT,
             vk::DeferredOperationKHR deferredOp = nullptr);
 
-        [[nodiscard]] void CreatePipelineLibrary(RayTracingShaderCollection& shaderCollection, 
+        /// @todo If an issue to anyone, then add support for creation of pipelines even when shaders are destroyed.
+        /// in theory this is already possible, because we don't use the modules for anything other than pipeline library
+        /// creation and we just need to know how many shaders per shader type were in the pipeline library.
+        /// But the if someone doesn't like the fact that std::vector<Shader> is used because it consumes 
+        /// unnecessary memory, then this we can add support for this by adding a new struct that contains
+        /// the number of shaders that were in the pipeline library and the pipeline library handle.
+        /// Should be simple to implement, but I don't see a reason to do it unless someone requests it.
+
+
+        /// @brief Creates a ray tracing pipeline library
+        /// @param shaderCollection The shader collection that will be used to create the pipeline library
+        /// @param settings The settings that will be used to create the pipeline library
+        /// @param flags The flags that will be used to create the pipeline library, default is eDescriptorBufferEXT
+        /// @param deferredOp The deferred operation that will be used to create the pipeline library, default is nullptr
+        /// @return shaderCollection::CollectionPipeline is set to the created pipeline library
+        [[nodiscard]]
+        void CreatePipelineLibrary(RayTracingShaderCollection& shaderCollection, 
             PipelineSettings& settings,
             vk::PipelineCreateFlags flags = vk::PipelineCreateFlagBits::eDescriptorBufferEXT,
             vk::DeferredOperationKHR deferredOp = nullptr);
 
         /// @brief Destroys the shader module
         /// @param shader The shader module that will be destroyed
-        void DestroyShader(Shader & shader);
+        void DestroyShader(Shader& shader);
 
         // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
         // @@@@@@@@@@@@@@@@@@@@@@@@@ Descriptor Functions @@@@@@@@@@@@@@@@@@@@@@@@@@@@@

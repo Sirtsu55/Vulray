@@ -93,30 +93,24 @@ namespace vr
     /// @brief Structure that defines the information needed to create a shader binding table
     struct ShaderBindingTableInfo
     {
-        /// @brief How many ray gen shaders are in the shader binding table
-        uint32_t RayGenShaderCount = 0;
         /// @brief The size of each ray gen shader record in bytes
         uint32_t RayGenShaderRecordSize = 0;
 
-        /// @brief How many miss shaders are in the shader binding table
-        uint32_t MissShaderCount = 0;
         /// @brief The size of each miss shader record in bytes
         uint32_t MissShaderRecordSize = 0;
 
-        /// @brief How many hit groups are in the shader binding table
-        uint32_t HitGroupCount = 0;
         /// @brief The size of each hit group shader record in bytes
         uint32_t HitGroupRecordSize = 0;
 
-        /// @brief How many callable shaders are in the shader binding table
-        uint32_t CallableShaderCount = 0;
         /// @brief The size of each callable shader record in bytes
         uint32_t CallableShaderRecordSize = 0;
 
 
-        /// Graph of how the shaders might be mixed in a Full Pipeline
+        /// Graph of how the shaders might be mixed in a full pipeline.
         /// The shaders can be mixed in any way, but this is just an example
+
         /// | Pipeline                      | SBT Index |
+        /// ---------------------------------------------
         /// | ShaderCollection1.Rgen        | 0         |
         /// | ShaderCollection1.Miss        | 1         |
         /// | ShaderCollection1.HitGroup    | 2         |
@@ -126,9 +120,14 @@ namespace vr
         /// | ShaderCollection2.HitGroup2   | 6         |
         /// | ShaderCollection2.Callable    | 7         |
         /// | ShaderCollection3.Rgen        | 8         |
-        /// These shaders must be organised per shader type
-        /// That would turn the graph into this
+        /// ---------------------------------------------
+        /// We want to support linking new shader collections to the already existing pipeline for efficiency.
+        /// This means that the shaders can be mixed in any way and organising them is necessary for the SBT to work.
+        /// We need indices for shader types to tell where in the pipeline the shaders live.
+        /// Then the shaders go into the SBT organised by their index.
+        /// That would turn the graph into this.
         /// | Pipeline                      | SBT Index |
+        /// ---------------------------------------------
         /// | ShaderCollection1.Rgen        | 0         |
         /// | ShaderCollection3.Rgen        | 1         |
         /// | ShaderCollection1.Miss        | 2         | 
@@ -138,6 +137,8 @@ namespace vr
         /// | ShaderCollection2.HitGroup2   | 6         |
         /// | ShaderCollection1.Callable    | 7         |
         /// | ShaderCollection2.Callable    | 8         |
+        /// ---------------------------------------------
+
 
 
         /// @brief These vectors contain where the raygen shaders live in the pipeline
@@ -151,7 +152,6 @@ namespace vr
 
         /// @brief These vectors where the callable shaders live in the pipeline
         std::vector<uint32_t> CallableIndices = {};
-
     };
 
 }

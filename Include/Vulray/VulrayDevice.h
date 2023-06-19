@@ -455,10 +455,17 @@ namespace vr
         /// @brief Gets the opaque handles for the shader records in the SBT buffer
         /// @param pipeline The pipeline that will be used to get the handles
         /// @param firstGroup The index of the first shader group in the pipeline
-        /// @param groupCount The number of shader groups that will be used to get the handles
+        /// @param groupCount The number of shader groups after firstGroup that will be used to get the handles
         /// @return The opaque handles for the shader records in the SBT buffer
         /// @note For Vulray's internal use, but can be used by the user doing custom SBT 
         [[nodiscard]] std::vector<uint8_t> GetHandlesForSBTBuffer(vk::Pipeline pipeline, uint32_t firstGroup, uint32_t groupCount);
+
+        /// @brief Gets the opaque handles for the shader records in the SBT buffer
+        /// @param pipeline The pipeline that will be used to get the handles
+        /// @param firstGroup The index of the first shader group in the pipeline
+        /// @param groupCount The number of shader groups after @c firstGroup that will be used to get the handles
+
+        void GetHandlesForSBTBuffer(vk::Pipeline pipeline, uint32_t firstGroup, uint32_t groupCount, void* data);
 
         /// @brief Writes data to a shader record in the SBT buffer
         /// @param sbtBuf The SBT buffer that will be written to

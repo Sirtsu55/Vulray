@@ -163,13 +163,21 @@ namespace vr
         std::vector<vk::Pipeline> libPipelines = {};
         libPipelines.reserve(shaderCollections.size());
 
+        uint32_t pipelineIndex = 0; // index of shader in the compiled pipeline
+
         for(auto& collection : shaderCollections)
         {
             libPipelines.push_back(collection.CollectionPipeline);
-            sbtInfo.RayGenShaderCount += collection.RayGenShaders.size();
-            sbtInfo.MissShaderCount += collection.MissShaders.size();
-            sbtInfo.HitGroupCount += collection.HitGroups.size();
-            sbtInfo.CallableShaderCount += collection.CallableShaders.size();
+            // Assign where in the pipeline the shaders are, for future SBT creation, 
+            // so opaque handles can be queried for the shader groups
+            for(auto& shader : collection.RayGenShaders)
+                sbtInfo.RayGenIndices.push_back(pipelineIndex++);
+            for(auto& shader : collection.MissShaders)
+                sbtInfo.MissIndices.push_back(pipelineIndex++);
+            for(auto& shader : collection.HitGroups)
+                sbtInfo.HitGroupIndices.push_back(pipelineIndex++);
+            for(auto& shader : collection.CallableShaders)
+                sbtInfo.CallableIndices.push_back(pipelineIndex++);
         }
         
         vk::RayTracingPipelineInterfaceCreateInfoKHR interfaceInfo = vk::RayTracingPipelineInterfaceCreateInfoKHR()

@@ -21,10 +21,11 @@ namespace vr
     static std::vector<const char*> RayTracingExtensions = {
         VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME,
         VK_KHR_RAY_QUERY_EXTENSION_NAME,
-        VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME,
         VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME,
         VK_EXT_DESCRIPTOR_BUFFER_EXTENSION_NAME,
-        VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME // required by accel struct extension
+        VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME, // required by accel struct extension
+        VK_KHR_PIPELINE_LIBRARY_EXTENSION_NAME,
+        VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME, // Required by Vulray if using Descriptors that vulray creates
     };
 
     std::vector<const char*> GetRequiredExtensionsForVulray()

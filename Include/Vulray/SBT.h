@@ -63,17 +63,6 @@ namespace vr
         /// | CallableShaders  |
     };
 
-    /// @brief Contains all the shaders that will be used in a shader binding table and the shader record size for each shader type
-    /// This structure is used to build the SBTBuffer and the pipeline
-    struct ShaderBindingTable
-    {
-        RayTracingShaderCollection Shaders = {};
-        uint32_t RayGenShaderRecordSize     = 0; //size of each ray gen shader record
-        uint32_t MissShaderRecordSize       = 0; //size of each miss shader record
-        uint32_t HitShaderRecordSize        = 0; //size of each hit group shader record
-        uint32_t CallableShaderRecordSize   = 0; //size of each callable shader record
-    };
-
     /// @brief Structure that defines the settings for a ray tracing pipeline. When creating pipeline libraries that 
     ///  link to a single pipeline, the settigns should be the same for all pipelines
     struct PipelineSettings

@@ -508,10 +508,11 @@ namespace vr
         void WriteToSBT(SBTBuffer sbtBuf, ShaderGroup group, uint32_t groupIndex, void* data, uint32_t dataSize, void* mappedData = nullptr);
 
 
-        /// @brief Creates a buffer for each shader group in the pipeline and copies the opaque handles to the buffer
+        /// @brief Creates a buffer for each shader type in the shader binding table
         /// @param pipeline The pipeline that will be used to create the SBT buffer
-        /// @param sbt The collection of shaders that will be used to create the SBT buffer
-        /// @return The created SBT buffer
+        /// @param sbt The information about the shader binding table, must contain the indices of the shader groups in the pipeline
+        /// @return The SBT buffer object, which has buffers and vk::StridedDeviceAddressRegionKHR for each shader type in the shader binding table
+        /// ready to be used in dispatching rays.
         [[nodiscard]] SBTBuffer CreateSBT(vk::Pipeline pipeline, const ShaderBindingTableInfo& sbt);
 
         /// @brief Destroys the SBT buffer

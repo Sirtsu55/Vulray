@@ -110,11 +110,7 @@ namespace vr
             outSBT.CallableBuffer = CreateBuffer(callSize * callCount, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
                 vk::BufferUsageFlagBits::eShaderDeviceAddressKHR | vk::BufferUsageFlagBits::eShaderBindingTableKHR, mRayTracingProperties.shaderGroupBaseAlignment);
         
-        //map all the buffers
-
-
         // fill in offsets for all shader groups
-
         if(rgenCount > 0)
             outSBT.RayGenRegion = vk::StridedDeviceAddressRegionKHR()
                 .setDeviceAddress(outSBT.RayGenBuffer.DevAddress)
@@ -183,10 +179,6 @@ namespace vr
         if(callData)
             UnmapBuffer(outSBT.CallableBuffer);
         
-        
-
-
-
         return outSBT;
     }
 

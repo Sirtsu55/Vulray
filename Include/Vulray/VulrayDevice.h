@@ -39,6 +39,9 @@ namespace vr
         /// @brief Get the Vulkan instance handle
         vk::Instance GetInstance() const { return mInstance; }
 
+        /// @brief Get the Vulkan dynamic loader
+        vk::DispatchLoaderDynamic GetDynamicLoader() const { return mDynLoader; }
+
         /// @brief Get the Physical device properties
         vk::PhysicalDeviceProperties GetProperties() const { return mDeviceProperties; }
 
@@ -323,19 +326,60 @@ namespace vr
         /// @param info The ShaderBindingTable including the collection of shaders that will be used to create the shader stages and shader groups
         /// @return The shader stages and shader groups that are constructed from the ShaderBindingTable
         [[nodiscard]] std::pair<std::vector<vk::PipelineShaderStageCreateInfo>, std::vector<vk::RayTracingShaderGroupCreateInfoKHR>> 
-            GetShaderStagesAndRayTracingGroups(const ShaderBindingTable& info);
+            GetShaderStagesAndRayTracingGroups(const RayTracingShaderCollection& info);
 
-        /// @brief Creates a pipeline
-        /// @param descLayouts The descriptor set layouts that will be used to create the pipeline layout
-        /// @param info The ShaderBindingTable that will be used to create the pipeline layout
-        /// @param recursionDepth The recursion depth of the ray tracing pipeline
-        /// @param flags The flags that will be used to create the pipeline. If using Vulray's descriptor buffer, this should have the eDescriptorBufferEXT flag.
-        /// @return The created pipeline
-        [[nodiscard]] vk::Pipeline CreateRayTracingPipeline(vk::PipelineLayout layout, const ShaderBindingTable& info, uint32_t recursuionDepth, vk::PipelineCreateFlags flags = vk::PipelineCreateFlagBits::eDescriptorBufferEXT );
+        /// @brief Creates a ray tracing pipeline
+        /// @param shaderCollection The shader collection that will be used to create the pipeline.
+        /// The field shaderCollection::CollectionPipeline is not used, because it is not linking
+        /// many pipelines together, it is just creating one pipeline.
+        /// @param settings The settings that will be used to create the pipeline
+        /// @param flags The flags that will be used to create the pipeline, default is eDescriptorBufferEXT
+        /// @param deferredOp The deferred operation that will be used to create the pipeline, default is nullptr
+        /// @return The created ray tracing pipeline and the shader binding table info to create the shader binding table
+        [[nodiscard]] std::pair<vk::Pipeline, ShaderBindingTableInfo> CreateRayTracingPipeline(
+            const RayTracingShaderCollection& shaderCollection,
+            PipelineSettings& settings,
+            vk::PipelineCreateFlags flags = vk::PipelineCreateFlagBits::eDescriptorBufferEXT,
+            vk::DeferredOperationKHR deferredOp = nullptr);
+
+        /// @brief Creates a ray tracing pipeline
+        /// @param shaderCollections The shader collections that will be used to create the pipeline.
+        /// The field shaderCollection::CollectionPipeline must be set, because it is linking many pipelines together. 
+        /// @param settings The settings that will be used to create the pipeline. All the pipelines in the shaderCollections
+        /// must have been created with the same settings.
+        /// @param flags The flags that will be used to create the pipeline, default is eDescriptorBufferEXT
+        /// @param deferredOp The deferred operation that will be used to create the pipeline, default is nullptr
+        /// @return The created ray tracing pipeline and the shader binding table info to create the shader binding table
+        [[nodiscard]] std::pair<vk::Pipeline, ShaderBindingTableInfo> CreateRayTracingPipeline(
+            const std::vector<RayTracingShaderCollection>& shaderCollections,
+            PipelineSettings& settings,
+            vk::PipelineCreateFlags flags = vk::PipelineCreateFlagBits::eDescriptorBufferEXT,
+            vk::DeferredOperationKHR deferredOp = nullptr);
+
+        /// @todo If an issue to anyone, then add support for creation of pipelines even when shaders are destroyed.
+        /// in theory this is already possible, because we don't use the modules for anything other than pipeline library
+        /// creation and we just need to know how many shaders per shader type were in the pipeline library.
+        /// But the if someone doesn't like the fact that std::vector<Shader> is used because it consumes 
+        /// unnecessary memory, then this we can add support for this by adding a new struct that contains
+        /// the number of shaders that were in the pipeline library and the pipeline library handle.
+        /// Should be simple to implement, but I don't see a reason to do it unless someone requests it.
+
+
+        /// @brief Creates a ray tracing pipeline library
+        /// @param shaderCollection The shader collection that will be used to create the pipeline library
+        /// @param settings The settings that will be used to create the pipeline library
+        /// @param flags The flags that will be used to create the pipeline library, default is eDescriptorBufferEXT
+        /// @param deferredOp The deferred operation that will be used to create the pipeline library, default is nullptr
+        /// @return shaderCollection::CollectionPipeline is set to the created pipeline library
+        [[nodiscard]]
+        void CreatePipelineLibrary(RayTracingShaderCollection& shaderCollection, 
+            PipelineSettings& settings,
+            vk::PipelineCreateFlags flags = vk::PipelineCreateFlagBits::eDescriptorBufferEXT,
+            vk::DeferredOperationKHR deferredOp = nullptr);
 
         /// @brief Destroys the shader module
         /// @param shader The shader module that will be destroyed
-        void DestroyShader(Shader & shader);
+        void DestroyShader(Shader& shader);
 
         // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
         // @@@@@@@@@@@@@@@@@@@@@@@@@ Descriptor Functions @@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -441,10 +485,17 @@ namespace vr
         /// @brief Gets the opaque handles for the shader records in the SBT buffer
         /// @param pipeline The pipeline that will be used to get the handles
         /// @param firstGroup The index of the first shader group in the pipeline
-        /// @param groupCount The number of shader groups that will be used to get the handles
+        /// @param groupCount The number of shader groups after firstGroup that will be used to get the handles
         /// @return The opaque handles for the shader records in the SBT buffer
         /// @note For Vulray's internal use, but can be used by the user doing custom SBT 
         [[nodiscard]] std::vector<uint8_t> GetHandlesForSBTBuffer(vk::Pipeline pipeline, uint32_t firstGroup, uint32_t groupCount);
+
+        /// @brief Gets the opaque handles for the shader records in the SBT buffer
+        /// @param pipeline The pipeline that will be used to get the handles
+        /// @param firstGroup The index of the first shader group in the pipeline
+        /// @param groupCount The number of shader groups after @c firstGroup that will be used to get the handles
+
+        void GetHandlesForSBTBuffer(vk::Pipeline pipeline, uint32_t firstGroup, uint32_t groupCount, void* data);
 
         /// @brief Writes data to a shader record in the SBT buffer
         /// @param sbtBuf The SBT buffer that will be written to
@@ -457,11 +508,12 @@ namespace vr
         void WriteToSBT(SBTBuffer sbtBuf, ShaderGroup group, uint32_t groupIndex, void* data, uint32_t dataSize, void* mappedData = nullptr);
 
 
-        /// @brief Creates a buffer for each shader group in the pipeline and copies the opaque handles to the buffer
+        /// @brief Creates a buffer for each shader type in the shader binding table
         /// @param pipeline The pipeline that will be used to create the SBT buffer
-        /// @param sbt The collection of shaders that will be used to create the SBT buffer
-        /// @return The created SBT buffer
-        [[nodiscard]] SBTBuffer CreateSBT(vk::Pipeline pipeline, const ShaderBindingTable& sbt);
+        /// @param sbt The information about the shader binding table, must contain the indices of the shader groups in the pipeline
+        /// @return The SBT buffer object, which has buffers and vk::StridedDeviceAddressRegionKHR for each shader type in the shader binding table
+        /// ready to be used in dispatching rays.
+        [[nodiscard]] SBTBuffer CreateSBT(vk::Pipeline pipeline, const ShaderBindingTableInfo& sbt);
 
         /// @brief Destroys the SBT buffer
         /// @param buffer The SBT buffer that will be destroyed

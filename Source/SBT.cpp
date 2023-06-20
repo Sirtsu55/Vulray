@@ -15,11 +15,23 @@ namespace vr
         {
             VULRAY_LOG_ERROR("GetHandlesForSBTBuffer: Failed to get ray tracing shader group handles");
         }
-        return handles;
+        return std::move(handles);
     }
 
+    void VulrayDevice::GetHandlesForSBTBuffer(vk::Pipeline pipeline, uint32_t firstGroup, uint32_t groupCount, void *data)
+    {
+        uint32_t alignedSize = AlignUp(mRayTracingProperties.shaderGroupHandleSize, mRayTracingProperties.shaderGroupHandleAlignment);
+        uint32_t size = alignedSize * groupCount;
 
-    void VulrayDevice::WriteToSBT(SBTBuffer sbtBuf, ShaderGroup group, uint32_t groupIndex, void* data, uint32_t dataSize, void* mappedData)
+        auto result = mDevice.getRayTracingShaderGroupHandlesKHR(pipeline, firstGroup, groupCount, size, data, mDynLoader);
+        if(result != vk::Result::eSuccess)
+        {
+            VULRAY_LOG_ERROR("GetHandlesForSBTBuffer: Failed to get ray tracing shader group handles");
+        }
+
+    }
+
+    void VulrayDevice::WriteToSBT(SBTBuffer sbtBuf, ShaderGroup group, uint32_t groupIndex, void *data, uint32_t dataSize, void *mappedData)
     {
         AllocatedBuffer* buffer = nullptr;
         vk::StridedDeviceAddressRegionKHR* addressRegion;
@@ -57,103 +69,104 @@ namespace vr
         }
     }
 
-    SBTBuffer VulrayDevice::CreateSBT(vk::Pipeline pipeline, const ShaderBindingTable& sbt)
+    SBTBuffer VulrayDevice::CreateSBT(vk::Pipeline pipeline, const ShaderBindingTableInfo& sbt)
     {
-        assert(sbt.RayGenShader.Module && "Ray gen shader must be set");
         SBTBuffer outSBT;
 
-        uint32_t numShaderGroups = static_cast<uint32_t>(1 + sbt.MissShaders.size() + sbt.HitGroups.size() + sbt.CallableShaders.size());
+        uint32_t rgenCount = sbt.RayGenIndices.size();
+        uint32_t missCount = sbt.MissIndices.size();
+        uint32_t hitCount = sbt.HitGroupIndices.size();
+        uint32_t callCount = sbt.CallableIndices.size();
 
         uint32_t handleSize = mRayTracingProperties.shaderGroupHandleSize;
         uint32_t handleSizeAligned = AlignUp(mRayTracingProperties.shaderGroupHandleSize, mRayTracingProperties.shaderGroupHandleAlignment);
 
         uint32_t rgenSize = AlignUp(sbt.RayGenShaderRecordSize + mRayTracingProperties.shaderGroupHandleSize, mRayTracingProperties.shaderGroupHandleAlignment);
         uint32_t missSize = AlignUp(sbt.MissShaderRecordSize + mRayTracingProperties.shaderGroupHandleSize, mRayTracingProperties.shaderGroupHandleAlignment);
-        uint32_t hitSize = AlignUp(sbt.HitShaderRecordSize + mRayTracingProperties.shaderGroupHandleSize, mRayTracingProperties.shaderGroupHandleAlignment);
+        uint32_t hitSize = AlignUp(sbt.HitGroupRecordSize + mRayTracingProperties.shaderGroupHandleSize, mRayTracingProperties.shaderGroupHandleAlignment);
         uint32_t callSize = AlignUp(sbt.CallableShaderRecordSize + mRayTracingProperties.shaderGroupHandleSize, mRayTracingProperties.shaderGroupHandleAlignment);
 
 
-        //don't add size if there are no shaders of that type, NOTE: raygen shader is required so we don't check for that
-        if (sbt.MissShaders.size() == 0)
+        if (rgenCount == 0)
+            rgenSize = 0;
+        if (missCount == 0)
             missSize = 0;
-        if (sbt.HitGroups.size() == 0)
+        if (hitCount == 0)
             hitSize = 0;
-        if (sbt.CallableShaders.size() == 0)
+        if (callCount == 0)
             callSize = 0;
 
-
-
         //Create all buffers for the SBT
-        outSBT.RayGenBuffer = CreateBuffer(rgenSize, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
-            vk::BufferUsageFlagBits::eShaderDeviceAddressKHR | vk::BufferUsageFlagBits::eShaderBindingTableKHR, mRayTracingProperties.shaderGroupBaseAlignment);
+        if(rgenSize > 0)
+            outSBT.RayGenBuffer = CreateBuffer(rgenSize, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
+                vk::BufferUsageFlagBits::eShaderDeviceAddressKHR | vk::BufferUsageFlagBits::eShaderBindingTableKHR, mRayTracingProperties.shaderGroupBaseAlignment);
         if(missSize > 0)
-            outSBT.MissBuffer = CreateBuffer(missSize * sbt.MissShaders.size(), VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
-            vk::BufferUsageFlagBits::eShaderDeviceAddressKHR | vk::BufferUsageFlagBits::eShaderBindingTableKHR, mRayTracingProperties.shaderGroupBaseAlignment);
+            outSBT.MissBuffer = CreateBuffer(missSize * missCount, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
+                vk::BufferUsageFlagBits::eShaderDeviceAddressKHR | vk::BufferUsageFlagBits::eShaderBindingTableKHR, mRayTracingProperties.shaderGroupBaseAlignment);
         if(hitSize > 0)
-            outSBT.HitGroupBuffer = CreateBuffer(hitSize * sbt.HitGroups.size(), VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
-            vk::BufferUsageFlagBits::eShaderDeviceAddressKHR | vk::BufferUsageFlagBits::eShaderBindingTableKHR, mRayTracingProperties.shaderGroupBaseAlignment);
+            outSBT.HitGroupBuffer = CreateBuffer(hitSize * hitCount, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
+                vk::BufferUsageFlagBits::eShaderDeviceAddressKHR | vk::BufferUsageFlagBits::eShaderBindingTableKHR, mRayTracingProperties.shaderGroupBaseAlignment);
         if(callSize > 0)
-            outSBT.CallableBuffer = CreateBuffer(callSize * sbt.CallableShaders.size(), VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
-            vk::BufferUsageFlagBits::eShaderDeviceAddressKHR | vk::BufferUsageFlagBits::eShaderBindingTableKHR, mRayTracingProperties.shaderGroupBaseAlignment);
+            outSBT.CallableBuffer = CreateBuffer(callSize * callCount, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
+                vk::BufferUsageFlagBits::eShaderDeviceAddressKHR | vk::BufferUsageFlagBits::eShaderBindingTableKHR, mRayTracingProperties.shaderGroupBaseAlignment);
         
-        //map all the buffers
-
-
         // fill in offsets for all shader groups
-        
-        outSBT.RayGenRegion = vk::StridedDeviceAddressRegionKHR()
-            .setDeviceAddress(outSBT.RayGenBuffer.DevAddress)
-            .setStride(rgenSize)
-            .setSize(rgenSize); // only one ray gen shader
-        if(sbt.MissShaders.size() > 0)
+        if(rgenCount > 0)
+            outSBT.RayGenRegion = vk::StridedDeviceAddressRegionKHR()
+                .setDeviceAddress(outSBT.RayGenBuffer.DevAddress)
+                .setStride(rgenSize)
+                .setSize(rgenSize); // only one ray gen shader
+        if(missCount > 0)
             outSBT.MissRegion = vk::StridedDeviceAddressRegionKHR()
                 .setDeviceAddress(outSBT.MissBuffer.DevAddress)
                 .setStride(missSize)
-                .setSize(missSize * sbt.MissShaders.size());
-        if(sbt.HitGroups.size() > 0)
+                .setSize(missSize * missCount);
+        if(hitCount > 0)
             outSBT.HitGroupRegion = vk::StridedDeviceAddressRegionKHR()
                 .setDeviceAddress(outSBT.HitGroupBuffer.DevAddress)
                 .setStride(hitSize)
-                .setSize(hitSize * sbt.HitGroups.size());
-        if(sbt.CallableShaders.size() > 0)
+                .setSize(hitSize * hitCount);
+        if(callCount > 0)
             outSBT.CallableRegion = vk::StridedDeviceAddressRegionKHR()
                 .setDeviceAddress(outSBT.CallableBuffer.DevAddress)
                 .setStride(callSize)
-                .setSize(callSize * sbt.CallableShaders.size());
+                .setSize(callSize * callCount);
 
 
-        uint32_t handleOffset = 0; // opaque handle offset
-        
-        std::vector<uint8_t> sbtHandles = GetHandlesForSBTBuffer(pipeline, 0, numShaderGroups);
-        
+        const uint32_t opaqueHandleSize = mRayTracingProperties.shaderGroupHandleSize;
+        uint8_t* opaqueHandle = new uint8_t[opaqueHandleSize];
         //copy records and shader handles into the SBT buffer
-        void* rgenData = MapBuffer(outSBT.RayGenBuffer);
-        if(rgenData)
+        uint8_t* rgenData = rgenSize > 0 ? (uint8_t*)MapBuffer(outSBT.RayGenBuffer) : nullptr;
+        for(uint32_t i = 0; rgenData && i < rgenCount; i++)
         {
-            memcpy(rgenData, sbtHandles.data() + handleOffset, mRayTracingProperties.shaderGroupHandleSize);
-            handleOffset += mRayTracingProperties.shaderGroupHandleSize;
+            uint32_t shaderIndex = sbt.RayGenIndices[i];
+            GetHandlesForSBTBuffer(pipeline, shaderIndex, 1, opaqueHandle);
+            //copy shader handle
+            memcpy(rgenData + (i * rgenSize), opaqueHandle, opaqueHandleSize);
         }
-
-        char* missData = missSize > 0 ? (char*)MapBuffer(outSBT.MissBuffer) : nullptr;
-        for(uint32_t i = 0; missData && i < sbt.MissShaders.size(); i++)
+        uint8_t* missData = missSize > 0 ? (uint8_t*)MapBuffer(outSBT.MissBuffer) : nullptr;
+        for(uint32_t i = 0; missData && i < missCount; i++)
         {
-            memcpy(missData, sbtHandles.data() + handleOffset, mRayTracingProperties.shaderGroupHandleSize); // copy shader handle
-            handleOffset += mRayTracingProperties.shaderGroupHandleSize; // advance to next miss group in the opaque handle buffer
-            missData += missSize; // advance to next miss group
+            uint32_t shaderIndex = sbt.MissIndices[i];
+            GetHandlesForSBTBuffer(pipeline, shaderIndex, 1, opaqueHandle);
+            //copy shader handle
+            memcpy(missData + (missSize * i), opaqueHandle, opaqueHandleSize);
         }
-        char* hitData = hitSize > 0 ? (char*)MapBuffer(outSBT.HitGroupBuffer) : nullptr;
-        for(uint32_t i = 0; hitData && i < sbt.HitGroups.size(); i++)
+        uint8_t* hitData = hitSize > 0 ? (uint8_t*)MapBuffer(outSBT.HitGroupBuffer) : nullptr;
+        for(uint32_t i = 0; hitData && i < hitCount; i++)
         {
-            memcpy(hitData, sbtHandles.data() + handleOffset, mRayTracingProperties.shaderGroupHandleSize);
-            handleOffset += mRayTracingProperties.shaderGroupHandleSize;
-            hitData += hitSize;
+            uint32_t shaderIndex = sbt.HitGroupIndices[i];
+            GetHandlesForSBTBuffer(pipeline, shaderIndex, 1, opaqueHandle);
+            //copy shader handle
+            memcpy(hitData + (hitSize * i), opaqueHandle, opaqueHandleSize);
         }
-        char* callData = callSize > 0 ? (char*)MapBuffer(outSBT.CallableBuffer) : nullptr;
-        for(uint32_t i = 0; callData && i < sbt.CallableShaders.size(); i++)
+        uint8_t* callData = callSize > 0 ? (uint8_t*)MapBuffer(outSBT.CallableBuffer) : nullptr;
+        for(uint32_t i = 0; callData && i < callCount; i++)
         {
-            memcpy(callData, sbtHandles.data() + handleOffset, mRayTracingProperties.shaderGroupHandleSize);
-            handleOffset += mRayTracingProperties.shaderGroupHandleSize;
-            callData += callSize;
+            uint32_t shaderIndex = sbt.CallableIndices[i];
+            GetHandlesForSBTBuffer(pipeline, shaderIndex, 1, opaqueHandle);
+            //copy shader handle
+            memcpy(callData + (callSize * i), opaqueHandle, opaqueHandleSize);
         }
 
         //unmap all the buffers
@@ -166,10 +179,6 @@ namespace vr
         if(callData)
             UnmapBuffer(outSBT.CallableBuffer);
         
-        
-
-
-
         return outSBT;
     }
 

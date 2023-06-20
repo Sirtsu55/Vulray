@@ -1,12 +1,11 @@
 #include "Vulray/VulrayDevice.h"
 #include "Vulray/Shader.h"
 
-
 namespace vr
 {
 
     std::pair<std::vector<vk::PipelineShaderStageCreateInfo>, std::vector<vk::RayTracingShaderGroupCreateInfoKHR>> 
-        VulrayDevice::GetShaderStagesAndRayTracingGroups(const ShaderBindingTable& info)
+        VulrayDevice::GetShaderStagesAndRayTracingGroups(const RayTracingShaderCollection& info)
     {
         std::vector<vk::PipelineShaderStageCreateInfo> shaderStages;
         std::vector<vk::RayTracingShaderGroupCreateInfoKHR> shaderGroups;
@@ -14,11 +13,12 @@ namespace vr
         shaderGroups.reserve(1 + info.MissShaders.size() + info.HitGroups.size() + info.CallableShaders.size());
         
         //create ray gen shader groups
+        for(auto& shader : info.RayGenShaders)
         {
             shaderStages.push_back(vk::PipelineShaderStageCreateInfo()
                 .setStage(vk::ShaderStageFlagBits::eRaygenKHR)
-                .setModule(info.RayGenShader.Module)
-                .setPName(info.RayGenShader.EntryPoint));
+                .setModule(shader.Module)
+                .setPName(shader.EntryPoint));
             
             uint32_t rayGenIndex = static_cast<uint32_t>(shaderStages.size() - 1);
 
@@ -122,38 +122,137 @@ namespace vr
         return std::make_pair(std::move(shaderStages), std::move(shaderGroups));
     }
 
-    vk::Pipeline VulrayDevice::CreateRayTracingPipeline(vk::PipelineLayout layout, const ShaderBindingTable &info, uint32_t recursuionDepth, vk::PipelineCreateFlags flags)
+    std::pair<vk::Pipeline, ShaderBindingTableInfo> VulrayDevice::CreateRayTracingPipeline(
+        const RayTracingShaderCollection &shaderCollection, 
+        PipelineSettings &settings, 
+        vk::PipelineCreateFlags flags, 
+        vk::DeferredOperationKHR deferredOp)
     {
-        auto [shaderStages, shaderGroups] = GetShaderStagesAndRayTracingGroups(info);
+        vr::ShaderBindingTableInfo sbtInfo = {};
 
-        if(recursuionDepth >= mRayTracingProperties.maxRayRecursionDepth)
-        {
-            VULRAY_LOG_WARNING("CreateRayTracingPipeline: Recursion Depth is greater than max ray recursion depth");
-            recursuionDepth = mRayTracingProperties.maxRayRecursionDepth;
-        }
+        uint32_t pipelineIndex = 0; // index of shader in the compiled pipeline
 
-        //Create pipeline
-        auto pipelineInf = vk::RayTracingPipelineCreateInfoKHR()
-            .setStageCount(static_cast<uint32_t>(shaderStages.size()))
-            .setPStages(shaderStages.data())
-            .setGroupCount(static_cast<uint32_t>(shaderGroups.size()))
-            .setPGroups(shaderGroups.data())
-            .setMaxPipelineRayRecursionDepth(recursuionDepth) 
-            .setLayout(layout)
-            .setFlags(flags);
-
-        auto pipeline = mDevice.createRayTracingPipelineKHR(nullptr, nullptr, pipelineInf, nullptr, mDynLoader);
+        for(auto& shader : shaderCollection.RayGenShaders)
+            sbtInfo.RayGenIndices.push_back(pipelineIndex++);
+        for(auto& shader : shaderCollection.MissShaders)
+            sbtInfo.MissIndices.push_back(pipelineIndex++);
+        for(auto& shader : shaderCollection.HitGroups)
+            sbtInfo.HitGroupIndices.push_back(pipelineIndex++);
+        for(auto& shader : shaderCollection.CallableShaders)
+            sbtInfo.CallableIndices.push_back(pipelineIndex++);
         
-        if(pipeline.result != vk::Result::eSuccess)
+        auto [shaderStages, shderGroups] = GetShaderStagesAndRayTracingGroups(shaderCollection);
+
+        vk::RayTracingPipelineInterfaceCreateInfoKHR interfaceInfo = vk::RayTracingPipelineInterfaceCreateInfoKHR()
+            .setMaxPipelineRayHitAttributeSize(settings.MaxHitAttributeSize)
+            .setMaxPipelineRayPayloadSize(settings.MaxPayloadSize);
+
+        auto pipelineInfo = vk::RayTracingPipelineCreateInfoKHR()
+            .setFlags(flags)
+            .setMaxPipelineRayRecursionDepth(settings.MaxRecursionDepth)
+            .setPLibraryInterface(&interfaceInfo)
+            .setLayout(settings.PipelineLayout)
+            .setGroups(shderGroups)
+            .setStages(shaderStages);
+
+
+        auto res = mDevice.createRayTracingPipelineKHR(deferredOp, nullptr, pipelineInfo, nullptr, mDynLoader);
+
+        // when deferredOp is not null, the pipeline is created asynchronously, so it doesn't return success or failure
+        if(res.result != vk::Result::eSuccess && res.result != vk::Result::eOperationDeferredKHR) 
         {
             VULRAY_LOG_ERROR("CreateRayTracingPipeline: Failed to create ray tracing pipeline");    
-            pipeline.value = nullptr;
+            res.value = nullptr;
+        }
+
+        return std::make_pair(res.value, sbtInfo);
+    }
+    std::pair<vk::Pipeline, ShaderBindingTableInfo> VulrayDevice::CreateRayTracingPipeline(
+        const std::vector<RayTracingShaderCollection> &shaderCollections,
+        PipelineSettings &settings,
+        vk::PipelineCreateFlags flags,
+        vk::DeferredOperationKHR deferredOp)
+    {
+        vr::ShaderBindingTableInfo sbtInfo = {};
+
+        std::vector<vk::Pipeline> libPipelines = {};
+        libPipelines.reserve(shaderCollections.size());
+
+        uint32_t pipelineIndex = 0; // index of shader in the compiled pipeline
+
+        for(auto& collection : shaderCollections)
+        {
+            libPipelines.push_back(collection.CollectionPipeline);
+            // Assign where in the pipeline the shaders are, for future SBT creation, 
+            // so opaque handles can be queried for the shader groups
+            for(auto& shader : collection.RayGenShaders)
+                sbtInfo.RayGenIndices.push_back(pipelineIndex++);
+            for(auto& shader : collection.MissShaders)
+                sbtInfo.MissIndices.push_back(pipelineIndex++);
+            for(auto& shader : collection.HitGroups)
+                sbtInfo.HitGroupIndices.push_back(pipelineIndex++);
+            for(auto& shader : collection.CallableShaders)
+                sbtInfo.CallableIndices.push_back(pipelineIndex++);
         }
         
-        return pipeline.value;       
+        vk::RayTracingPipelineInterfaceCreateInfoKHR interfaceInfo = vk::RayTracingPipelineInterfaceCreateInfoKHR()
+            .setMaxPipelineRayHitAttributeSize(settings.MaxHitAttributeSize)
+            .setMaxPipelineRayPayloadSize(settings.MaxPayloadSize);
+
+        vk::PipelineLibraryCreateInfoKHR libraryInfo = vk::PipelineLibraryCreateInfoKHR()
+            .setPLibraries(libPipelines.data())
+            .setLibraryCount(libPipelines.size());
+
+        auto pipelineInfo = vk::RayTracingPipelineCreateInfoKHR()
+            .setFlags(flags)
+            .setMaxPipelineRayRecursionDepth(settings.MaxRecursionDepth)
+            .setPLibraryInterface(&interfaceInfo)
+            .setPLibraryInfo(&libraryInfo)
+            .setLayout(settings.PipelineLayout);
+
+        auto res = mDevice.createRayTracingPipelineKHR(deferredOp, nullptr, pipelineInfo, nullptr, mDynLoader);
+        // when deferredOp is not null, the pipeline is created asynchronously, so it doesn't return success or failure
+        if(res.result != vk::Result::eSuccess && res.result != vk::Result::eOperationDeferredKHR) 
+        {
+            VULRAY_LOG_ERROR("CreateRayTracingPipeline: Failed to create ray tracing pipeline");    
+            res.value = nullptr;
+        }
+
+        return std::make_pair(res.value, sbtInfo);
     }
 
-    void VulrayDevice::DispatchRays(vk::CommandBuffer cmdBuf, const vk::Pipeline rtPipeline, const SBTBuffer& buffer, uint32_t width, uint32_t height, uint32_t depth)
+    void VulrayDevice::CreatePipelineLibrary(RayTracingShaderCollection &shaderCollection,
+                                             PipelineSettings &settings,
+                                             vk::PipelineCreateFlags flags,
+                                             vk::DeferredOperationKHR deferredOp)
+    {
+        vk::RayTracingPipelineInterfaceCreateInfoKHR interfaceInfo = vk::RayTracingPipelineInterfaceCreateInfoKHR()
+            .setMaxPipelineRayHitAttributeSize(settings.MaxHitAttributeSize)
+            .setMaxPipelineRayPayloadSize(settings.MaxPayloadSize);
+
+        auto [shaderStages, shderGroups] = GetShaderStagesAndRayTracingGroups(shaderCollection);
+
+        auto pipelineInfo = vk::RayTracingPipelineCreateInfoKHR()
+            .setFlags(flags | vk::PipelineCreateFlagBits::eLibraryKHR)
+            .setMaxPipelineRayRecursionDepth(settings.MaxRecursionDepth)
+            .setPLibraryInterface(&interfaceInfo)
+            .setLayout(settings.PipelineLayout)
+            .setGroups(shderGroups)
+            .setStages(shaderStages);
+
+        auto res = mDevice.createRayTracingPipelineKHR(deferredOp, nullptr, pipelineInfo, nullptr, mDynLoader);
+
+        // when deferredOp is not null, the pipeline is created asynchronously, so it doesn't return success or failure
+        if(res.result != vk::Result::eSuccess && res.result != vk::Result::eOperationDeferredKHR) 
+        {
+            VULRAY_LOG_ERROR("CreateRayTracingPipeline: Failed to create ray tracing pipeline");    
+            res.value = nullptr;
+        }
+
+        shaderCollection.CollectionPipeline = res.value;
+    }
+    
+    void VulrayDevice::DispatchRays(vk::CommandBuffer cmdBuf, const vk::Pipeline rtPipeline, const SBTBuffer &buffer, uint32_t width, uint32_t height, uint32_t depth)
     {
         //dispatch rays
         cmdBuf.bindPipeline(vk::PipelineBindPoint::eRayTracingKHR, rtPipeline);

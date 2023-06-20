@@ -137,16 +137,16 @@ namespace vr
                 .setSize(callSize * callCount);
 
 
-        uint8_t* opaqueHandle = new uint8_t[mRayTracingProperties.shaderGroupHandleSize];
-        
+        const uint32_t opaqueHandleSize = mRayTracingProperties.shaderGroupHandleSize;
+        uint8_t* opaqueHandle = new uint8_t[opaqueHandleSize];
         //copy records and shader handles into the SBT buffer
-        void* rgenData = MapBuffer(outSBT.RayGenBuffer);
+        uint8_t* rgenData = rgenSize > 0 ? (uint8_t*)MapBuffer(outSBT.RayGenBuffer) : nullptr;
         for(uint32_t i = 0; rgenData && i < rgenCount; i++)
         {
             uint32_t shaderIndex = sbt.RayGenIndices[i];
             GetHandlesForSBTBuffer(pipeline, shaderIndex, 1, opaqueHandle);
             //copy shader handle
-            memcpy(rgenData, opaqueHandle, mRayTracingProperties.shaderGroupHandleSize);
+            memcpy(rgenData + (i * rgenSize), opaqueHandle, opaqueHandleSize);
         }
         uint8_t* missData = missSize > 0 ? (uint8_t*)MapBuffer(outSBT.MissBuffer) : nullptr;
         for(uint32_t i = 0; missData && i < missCount; i++)
@@ -154,7 +154,7 @@ namespace vr
             uint32_t shaderIndex = sbt.MissIndices[i];
             GetHandlesForSBTBuffer(pipeline, shaderIndex, 1, opaqueHandle);
             //copy shader handle
-            memcpy(missData, opaqueHandle, mRayTracingProperties.shaderGroupHandleSize);
+            memcpy(missData + (missSize * i), opaqueHandle, opaqueHandleSize);
         }
         uint8_t* hitData = hitSize > 0 ? (uint8_t*)MapBuffer(outSBT.HitGroupBuffer) : nullptr;
         for(uint32_t i = 0; hitData && i < hitCount; i++)
@@ -162,7 +162,7 @@ namespace vr
             uint32_t shaderIndex = sbt.HitGroupIndices[i];
             GetHandlesForSBTBuffer(pipeline, shaderIndex, 1, opaqueHandle);
             //copy shader handle
-            memcpy(hitData, opaqueHandle, mRayTracingProperties.shaderGroupHandleSize);
+            memcpy(hitData + (hitSize * i), opaqueHandle, opaqueHandleSize);
         }
         uint8_t* callData = callSize > 0 ? (uint8_t*)MapBuffer(outSBT.CallableBuffer) : nullptr;
         for(uint32_t i = 0; callData && i < callCount; i++)
@@ -170,7 +170,7 @@ namespace vr
             uint32_t shaderIndex = sbt.CallableIndices[i];
             GetHandlesForSBTBuffer(pipeline, shaderIndex, 1, opaqueHandle);
             //copy shader handle
-            memcpy(callData, opaqueHandle, mRayTracingProperties.shaderGroupHandleSize);
+            memcpy(callData + (callSize * i), opaqueHandle, opaqueHandleSize);
         }
 
         //unmap all the buffers

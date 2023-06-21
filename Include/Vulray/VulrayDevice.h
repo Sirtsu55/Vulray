@@ -533,13 +533,7 @@ namespace vr
         /// ready to be used in dispatching rays.
         [[nodiscard]] SBTBuffer CreateSBT(vk::Pipeline pipeline, const ShaderBindingTableInfo& sbt);
 
-        /// @brief Extends the SBT buffer with the given shader binding table info.
-        /// Internally calls CanSBTFitShaders(...) to check if the shaders can fit in the SBT buffer, returns false if the shaders cannot fit.
-        /// Then the SBT buffer should be recreated with CreateSBT(...) function.
-        /// @param pipeline The pipeline that will be used to extend the SBT buffer
-        /// @param buffer The SBT buffer that will be extended
-        /// @param sbtInfo The shader binding table info that will be used to extend the SBT buffer
-        bool ExtendSBT(vk::Pipeline pipeline, SBTBuffer& buffer, const ShaderBindingTableInfo& sbtInfo);
+        bool RebuildSBT(vk::Pipeline pipeline, SBTBuffer& buffer, const ShaderBindingTableInfo& sbt);
 
         /// @brief Checks if the shaders can fit in the SBT buffer 
         /// @param buffer The SBT buffer that will be checked

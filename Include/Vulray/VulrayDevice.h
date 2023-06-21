@@ -533,7 +533,25 @@ namespace vr
         /// ready to be used in dispatching rays.
         [[nodiscard]] SBTBuffer CreateSBT(vk::Pipeline pipeline, const ShaderBindingTableInfo& sbt);
 
+        /// @brief Rebuilds the SBT buffer with the new shader binding table info
+        /// @param pipeline The pipeline that will be used to rebuild the SBT buffer
+        /// @param buffer The SBT buffer that will be rebuilt
+        /// @param sbt The information about the shader binding table, must contain the indices of the shader groups in the pipeline
+        /// @return True if the SBT buffer was rebuilt successfully, false otherwise, because the SBT buffer is not big enough
+        /// to fit all the shaders in the shader binding table info, then the user should call CreateSBT(...) to create a new SBT buffer and
+        /// reserve more space for the shaders.
+        /// @note This function doesn't reallocate the SBT buffer, it just rewrites the new opaque handles to the buffer.
+        /// So you don't have to WriteToSBT(...) again after rebuilding the SBT buffer.
         bool RebuildSBT(vk::Pipeline pipeline, SBTBuffer& buffer, const ShaderBindingTableInfo& sbt);
+
+        /// @brief Copies the whole SBT from a buffer to another, including the opaque handles.
+        /// @param dst The SBT buffer that will be copied to
+        /// @param src The SBT buffer that will be copied from
+        /// @note dst must have the same or bigger size than src for all the SBT buffers.
+        /// @example SBT too small, so create a new SBT buffer with bigger size and copy the old SBT to the new one. 
+        /// Then call RebuildSBT(...) to rewrite the opaque handles to the new SBT buffer, because SBT won't function with the old opaque handles.
+        /// You would want to do this, because it copies the shader records, so you don't have to call WriteToSBT(...) again for even the old shader records.
+        void CopySBT(SBTBuffer& src, SBTBuffer& dst);
 
         /// @brief Checks if the shaders can fit in the SBT buffer 
         /// @param buffer The SBT buffer that will be checked

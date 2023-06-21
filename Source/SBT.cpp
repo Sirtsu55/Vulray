@@ -1,5 +1,6 @@
 #include "Vulray/VulrayDevice.h"
 #include "Vulray/SBT.h"
+#include "VulrayDevice.h"
 
 namespace vr
 {
@@ -209,6 +210,9 @@ namespace vr
         const uint32_t hitSize  = AlignUp(sbt.HitGroupRecordSize + handleSize, mRayTracingProperties.shaderGroupHandleAlignment);
         const uint32_t callSize = AlignUp(sbt.CallableShaderRecordSize + handleSize, mRayTracingProperties.shaderGroupHandleAlignment);
 
+        // we have to rewrite opaque handles to all the groups in the SBT, because on some implementations just keeping the old
+        // opaque handles and adding new opaque handles to the new added groups doesn't work
+
         std::vector<uint8_t> handles = GetHandlesForSBTBuffer(pipeline, 0, groupsCount);
         //copy records and shader handles into the SBT buffer
         uint8_t* rgenData = rgenSize > 0 ? (uint8_t*)MapBuffer(buffer.RayGenBuffer) : nullptr;
@@ -252,7 +256,7 @@ namespace vr
         
         // Some groups may have gotten additional shaders, so we need to update the stride and size of the regions
         // We don't have to worry about the buffer sizes if they don't fit as it is already checked at the beginning of this function
-        
+
         if(rgenCount > 0)
             buffer.RayGenRegion = vk::StridedDeviceAddressRegionKHR()
                 .setDeviceAddress(buffer.RayGenBuffer.DevAddress)
@@ -275,6 +279,46 @@ namespace vr
                 .setSize(callSize * callCount);
         
         return true;
+    }
+
+    void VulrayDevice::CopySBT(SBTBuffer& src, SBTBuffer& dst)
+    {
+        const uint8_t* dstRgenData = dst.RayGenRegion.size > 0 ? (uint8_t*)MapBuffer(dst.RayGenBuffer) : nullptr;
+        const uint8_t* dstMissData = dst.MissRegion.size > 0 ? (uint8_t*)MapBuffer(dst.MissBuffer) : nullptr;
+        const uint8_t* dstHitData  = dst.HitGroupRegion.size > 0 ? (uint8_t*)MapBuffer(dst.HitGroupBuffer) : nullptr;
+        const uint8_t* dstCallData = dst.CallableRegion.size > 0 ? (uint8_t*)MapBuffer(dst.CallableBuffer) : nullptr;
+        
+        const uint8_t* srcRgenData = src.RayGenRegion.size > 0 ? (uint8_t*)MapBuffer(src.RayGenBuffer) : nullptr;
+        const uint8_t* srcMissData = src.MissRegion.size > 0 ? (uint8_t*)MapBuffer(src.MissBuffer) : nullptr;
+        const uint8_t* srcHitData  = src.HitGroupRegion.size > 0 ? (uint8_t*)MapBuffer(src.HitGroupBuffer) : nullptr;
+        const uint8_t* srcCallData = src.CallableRegion.size > 0 ? (uint8_t*)MapBuffer(src.CallableBuffer) : nullptr;
+        
+        if(dstRgenData && srcRgenData)
+            memcpy(dstRgenData, srcRgenData, src.RayGenRegion.size);
+        if(dstMissData && srcMissData)
+            memcpy(dstMissData, srcMissData, src.MissRegion.size);
+        if(dstHitData && srcHitData)
+            memcpy(dstHitData, srcHitData, src.HitGroupRegion.size);
+        if(dstCallData && srcCallData)
+            memcpy(dstCallData, srcCallData, src.CallableRegion.size);
+        
+        if(dstRgenData)
+            UnmapBuffer(dst.RayGenBuffer);
+        if(dstMissData)
+            UnmapBuffer(dst.MissBuffer);
+        if(dstHitData)
+            UnmapBuffer(dst.HitGroupBuffer);
+        if(dstCallData)
+            UnmapBuffer(dst.CallableBuffer);
+
+        if(srcRgenData)
+            UnmapBuffer(src.RayGenBuffer);
+        if(srcMissData)
+            UnmapBuffer(src.MissBuffer);
+        if(srcHitData)
+            UnmapBuffer(src.HitGroupBuffer);
+        if(srcCallData)
+            UnmapBuffer(src.CallableBuffer);
     }
 
     bool VulrayDevice::CanSBTFitShaders(SBTBuffer &buffer, const ShaderBindingTableInfo &sbtInfo)

@@ -4,15 +4,15 @@
 
 ## Introduction
 Vulray is a library to simplify Vulkan Raytracing.
-This library is meant for people wanting to dip their hands into Vulkan Raytracing without any worries of writing boilerplate code for Acceleration Structure, SBT, Descriptors, Pipelines, etc.
-Using the library does precede some basic understanding of Vulkan objects.
-
+This library is meant for people wanting to dip their hands into Vulkan Raytracing without any worries of writing boilerplate code for Acceleration Structure, SBT, Descriptors, Pipelines, etc. 
+Using the library does precede some basic understanding of Vulkan objects. 
 ## Features
 - Creating Vulkan Device & Instance  (~20LoC) ✅
 - Bottom Level Acceleration Build/Update: ✅
 - Top Level Acceleration Build/Update: ✅
 - BLAS Compaction: ✅
 - Ray Tracing Pipeline Creation: ✅
+- Pipeline Libraries: ✅
 - SBT Creation/Update: ✅
 - Descriptor Set Creation/Update (Descriptor Buffer Extension): ✅
 - Buffer/Image Creation: ✅

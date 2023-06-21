@@ -356,6 +356,21 @@ namespace vr
             vk::PipelineCreateFlags flags = vk::PipelineCreateFlagBits::eDescriptorBufferEXT,
             vk::DeferredOperationKHR deferredOp = nullptr);
 
+        /// @brief Creates a ray tracing pipeline and returns the new shader binding table info based on the old shader binding table info
+        /// @param shaderCollection The shader collection that will be used to create the pipeline.
+        /// many pipelines together, it is just creating one pipeline.
+        /// @param settings The settings that will be used to create the pipeline
+        /// @param sbtInfoOld The old shader binding table info that will be used to create the new shader binding table info
+        /// @param flags The flags that will be used to create the pipeline, default is eDescriptorBufferEXT
+        /// @param deferredOp The deferred operation that will be used to create the pipeline, default is nullptr
+        /// @return The created ray tracing pipeline and the shader binding table info to create the shader binding table
+        [[nodiscard]] std::pair<vk::Pipeline, ShaderBindingTableInfo> CreateRayTracingPipeline(
+            const std::vector<RayTracingShaderCollection>& shaderCollections,
+            PipelineSettings& settings,
+            ShaderBindingTableInfo& sbtInfoOld,
+            vk::PipelineCreateFlags flags = vk::PipelineCreateFlagBits::eDescriptorBufferEXT,
+            vk::DeferredOperationKHR deferredOp = nullptr);
+
         /// @todo If an issue to anyone, then add support for creation of pipelines even when shaders are destroyed.
         /// in theory this is already possible, because we don't use the modules for anything other than pipeline library
         /// creation and we just need to know how many shaders per shader type were in the pipeline library.
@@ -494,7 +509,10 @@ namespace vr
         /// @param pipeline The pipeline that will be used to get the handles
         /// @param firstGroup The index of the first shader group in the pipeline
         /// @param groupCount The number of shader groups after @c firstGroup that will be used to get the handles
-
+        /// @param data The data that will be written to the handles
+        /// @warning Segfault if the data pointer is not valid or the data size if out of bounds.
+        /// The data must be minimum groupCount * RayTracingProperties::shaderGroupHandleSize bytes.
+        /// @note For Vulray's internal use, but can be used by the user doing custom SBT 
         void GetHandlesForSBTBuffer(vk::Pipeline pipeline, uint32_t firstGroup, uint32_t groupCount, void* data);
 
         /// @brief Writes data to a shader record in the SBT buffer
@@ -514,6 +532,32 @@ namespace vr
         /// @return The SBT buffer object, which has buffers and vk::StridedDeviceAddressRegionKHR for each shader type in the shader binding table
         /// ready to be used in dispatching rays.
         [[nodiscard]] SBTBuffer CreateSBT(vk::Pipeline pipeline, const ShaderBindingTableInfo& sbt);
+
+        /// @brief Rebuilds the SBT buffer with the new shader binding table info
+        /// @param pipeline The pipeline that will be used to rebuild the SBT buffer
+        /// @param buffer The SBT buffer that will be rebuilt
+        /// @param sbt The information about the shader binding table, must contain the indices of the shader groups in the pipeline
+        /// @return True if the SBT buffer was rebuilt successfully, false otherwise, because the SBT buffer is not big enough
+        /// to fit all the shaders in the shader binding table info, then the user should call CreateSBT(...) to create a new SBT buffer and
+        /// reserve more space for the shaders.
+        /// @note This function doesn't reallocate the SBT buffer, it just rewrites the new opaque handles to the buffer.
+        /// So you don't have to WriteToSBT(...) again after rebuilding the SBT buffer.
+        bool RebuildSBT(vk::Pipeline pipeline, SBTBuffer& buffer, const ShaderBindingTableInfo& sbt);
+
+        /// @brief Copies the whole SBT from a buffer to another, including the opaque handles.
+        /// @param dst The SBT buffer that will be copied to
+        /// @param src The SBT buffer that will be copied from
+        /// @note dst must have the same or bigger size than src for all the SBT buffers.
+        /// @example SBT too small, so create a new SBT buffer with bigger size and copy the old SBT to the new one. 
+        /// Then call RebuildSBT(...) to rewrite the opaque handles to the new SBT buffer, because SBT won't function with the old opaque handles.
+        /// You would want to do this, because it copies the shader records, so you don't have to call WriteToSBT(...) again for even the old shader records.
+        void CopySBT(SBTBuffer& src, SBTBuffer& dst);
+
+        /// @brief Checks if the shaders can fit in the SBT buffer 
+        /// @param buffer The SBT buffer that will be checked
+        /// @param sbtInfo The shader binding table info with the shader info that will be checked
+        /// @return True if the SBT buffer has room to encapsulate the all the shaders in the shader binding table info, false otherwise
+        bool CanSBTFitShaders(SBTBuffer& buffer, const ShaderBindingTableInfo& sbtInfo);
 
         /// @brief Destroys the SBT buffer
         /// @param buffer The SBT buffer that will be destroyed

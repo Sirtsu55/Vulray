@@ -221,6 +221,17 @@ namespace vr
         return std::make_pair(res.value, sbtInfo);
     }
 
+    std::pair<vk::Pipeline, ShaderBindingTableInfo> VulrayDevice::CreateRayTracingPipeline(const std::vector<RayTracingShaderCollection> &shaderCollections, PipelineSettings &settings, ShaderBindingTableInfo &sbtInfoOld, vk::PipelineCreateFlags flags, vk::DeferredOperationKHR deferredOp)
+    {
+        std::pair<vk::Pipeline, ShaderBindingTableInfo> pipelineInfo = CreateRayTracingPipeline(shaderCollections, settings, flags, deferredOp);
+        pipelineInfo.second.RayGenShaderRecordSize = sbtInfoOld.RayGenShaderRecordSize;
+        pipelineInfo.second.MissShaderRecordSize = sbtInfoOld.MissShaderRecordSize;
+        pipelineInfo.second.HitGroupRecordSize = sbtInfoOld.HitGroupRecordSize;
+        pipelineInfo.second.CallableShaderRecordSize = sbtInfoOld.CallableShaderRecordSize;
+
+        return pipelineInfo;
+    }
+    
     void VulrayDevice::CreatePipelineLibrary(RayTracingShaderCollection &shaderCollection,
                                              PipelineSettings &settings,
                                              vk::PipelineCreateFlags flags,

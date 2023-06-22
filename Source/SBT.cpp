@@ -1,6 +1,5 @@
 #include "Vulray/VulrayDevice.h"
 #include "Vulray/SBT.h"
-#include "VulrayDevice.h"
 
 namespace vr
 {
@@ -283,15 +282,15 @@ namespace vr
 
     void VulrayDevice::CopySBT(SBTBuffer& src, SBTBuffer& dst)
     {
-        const uint8_t* dstRgenData = dst.RayGenRegion.size > 0 ? (uint8_t*)MapBuffer(dst.RayGenBuffer) : nullptr;
-        const uint8_t* dstMissData = dst.MissRegion.size > 0 ? (uint8_t*)MapBuffer(dst.MissBuffer) : nullptr;
-        const uint8_t* dstHitData  = dst.HitGroupRegion.size > 0 ? (uint8_t*)MapBuffer(dst.HitGroupBuffer) : nullptr;
-        const uint8_t* dstCallData = dst.CallableRegion.size > 0 ? (uint8_t*)MapBuffer(dst.CallableBuffer) : nullptr;
+        uint8_t* dstRgenData = dst.RayGenRegion.size > 0 ? (uint8_t*)MapBuffer(dst.RayGenBuffer) : nullptr;
+        uint8_t* dstMissData = dst.MissRegion.size > 0 ? (uint8_t*)MapBuffer(dst.MissBuffer) : nullptr;
+        uint8_t* dstHitData  = dst.HitGroupRegion.size > 0 ? (uint8_t*)MapBuffer(dst.HitGroupBuffer) : nullptr;
+        uint8_t* dstCallData = dst.CallableRegion.size > 0 ? (uint8_t*)MapBuffer(dst.CallableBuffer) : nullptr;
         
-        const uint8_t* srcRgenData = src.RayGenRegion.size > 0 ? (uint8_t*)MapBuffer(src.RayGenBuffer) : nullptr;
-        const uint8_t* srcMissData = src.MissRegion.size > 0 ? (uint8_t*)MapBuffer(src.MissBuffer) : nullptr;
-        const uint8_t* srcHitData  = src.HitGroupRegion.size > 0 ? (uint8_t*)MapBuffer(src.HitGroupBuffer) : nullptr;
-        const uint8_t* srcCallData = src.CallableRegion.size > 0 ? (uint8_t*)MapBuffer(src.CallableBuffer) : nullptr;
+        uint8_t* srcRgenData = src.RayGenRegion.size > 0 ? (uint8_t*)MapBuffer(src.RayGenBuffer) : nullptr;
+        uint8_t* srcMissData = src.MissRegion.size > 0 ? (uint8_t*)MapBuffer(src.MissBuffer) : nullptr;
+        uint8_t* srcHitData  = src.HitGroupRegion.size > 0 ? (uint8_t*)MapBuffer(src.HitGroupBuffer) : nullptr;
+        uint8_t* srcCallData = src.CallableRegion.size > 0 ? (uint8_t*)MapBuffer(src.CallableBuffer) : nullptr;
         
         if(dstRgenData && srcRgenData)
             memcpy(dstRgenData, srcRgenData, src.RayGenRegion.size);

@@ -356,7 +356,9 @@ namespace vr
             vk::PipelineCreateFlags flags = vk::PipelineCreateFlagBits::eDescriptorBufferEXT,
             vk::DeferredOperationKHR deferredOp = nullptr);
 
-        /// @brief Creates a ray tracing pipeline and returns the new shader binding table info based on the old shader binding table info
+        /// @brief Convenience function that calls CreateRayTracingPipeline(...) and then copies the shader record sizes to the shader binding table info
+        /// from the old shader binding table info to the new shader binding table info, so you don't have to set the shader record sizes again when
+        /// creating the shader binding table.
         /// @param shaderCollection The shader collection that will be used to create the pipeline.
         /// many pipelines together, it is just creating one pipeline.
         /// @param settings The settings that will be used to create the pipeline

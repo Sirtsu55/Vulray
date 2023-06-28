@@ -78,10 +78,17 @@ namespace vr
             vk::BufferUsageFlagBits::eAccelerationStructureBuildInputReadOnlyKHR);
     }
 
+    AllocatedBuffer VulrayDevice::CreateScratchBuffer(uint32_t size)
+    {
+        return CreateBuffer(size, 0,
+            vk::BufferUsageFlagBits::eStorageBuffer,
+            mAccelProperties.minAccelerationStructureScratchOffsetAlignment);
+    }
+
     DescriptorBuffer VulrayDevice::CreateDescriptorBuffer(vk::DescriptorSetLayout layout,
-            std::vector<DescriptorItem>& items,
-            DescriptorBufferType type,
-            uint32_t setCount)
+                                                          std::vector<DescriptorItem> &items,
+                                                          DescriptorBufferType type,
+                                                          uint32_t setCount)
     {
         DescriptorBuffer outBuffer = {};
 

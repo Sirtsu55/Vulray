@@ -1,7 +1,6 @@
 #include "Vulray/AccelStruct.h"
 #include "Vulray/VulrayDevice.h"
 
-
 namespace vr
 {
 
@@ -93,8 +92,7 @@ namespace vr
         std::vector<vk::AccelerationStructureBuildGeometryInfoKHR> buildGeometryInfos;
         pBuildRangeInfos.reserve(buildInfos.size());
         buildGeometryInfos.reserve(buildInfos.size());
-        uint32_t scratchSize = 0;
-        // loop over build infos and get scratch sizes
+
         for(uint32_t i = 0; i < buildInfos.size(); i++)
         {
             pBuildRangeInfos.push_back(buildInfos[i].Ranges.get());
@@ -103,7 +101,6 @@ namespace vr
 
         //Build the acceleration structures
         cmdBuf.buildAccelerationStructuresKHR(buildInfos.size(), buildGeometryInfos.data(), pBuildRangeInfos.data(), mDynLoader);
-        
 
     }
 
@@ -275,10 +272,25 @@ namespace vr
         return oldBLASToReturn;
     }
 
-    AllocatedBuffer VulrayDevice::CreateScratchBufferBLAS(std::vector<BLASBuildInfo> &buildInfos)
+    AllocatedBuffer VulrayDevice::CreateScratchBufferFromBuildInfos(std::vector<BLASBuildInfo>& buildInfos)
+    {
+        uint32_t scratchSize = GetScratchBufferSize(buildInfos);
+
+        auto outScratchBuffer = CreateScratchBuffer(scratchSize);
+
+        BindScratchBufferToBuildInfos(outScratchBuffer, buildInfos);
+        
+        return outScratchBuffer;
+    }
+
+    void VulrayDevice::BindScratchAdressToBuildInfo(vk::DeviceAddress scratchAddr, BLASBuildInfo& buildInfo)
+    {
+        buildInfo.BuildGeometryInfo.setScratchData(AlignUp(scratchAddr, (uint64_t)mAccelProperties.minAccelerationStructureScratchOffsetAlignment));
+    }
+
+    uint32_t VulrayDevice::GetScratchBufferSize(const std::vector<BLASBuildInfo>& buildInfos)
     {
         uint32_t scratchSize = 0;
-        // loop over build infos and get scratch sizes
         for (auto& info : buildInfos)
         {
             vk::BuildAccelerationStructureModeKHR mode = info.BuildGeometryInfo.mode;
@@ -288,47 +300,22 @@ namespace vr
                 scratchSize += AlignUp(info.BuildSizes.updateScratchSize, (uint64_t)mAccelProperties.minAccelerationStructureScratchOffsetAlignment);
         }
 
-        auto outScratchBuffer = CreateBuffer(scratchSize, 0,
-            vk::BufferUsageFlagBits::eStorageBuffer,
-            mAccelProperties.minAccelerationStructureScratchOffsetAlignment);
+        //Mode
+        return scratchSize;
+    }
 
-        // loop over build infos and set scratch buffers
-        // this will offset the scratch buffer so that each build info has its own region of the scratch buffer
-        vk::DeviceAddress scratchDataAddr = outScratchBuffer.DevAddress;
-
+    void VulrayDevice::BindScratchBufferToBuildInfos(const vr::AllocatedBuffer& buffer, std::vector<BLASBuildInfo>& buildInfos)
+    {
+        vk::DeviceAddress scratchDataAddr = buffer.DevAddress;
         for (auto& info : buildInfos)
         {
             vk::BuildAccelerationStructureModeKHR mode = info.BuildGeometryInfo.mode;
-            BindScratchBufferToBuildInfo(scratchDataAddr, info);
+            BindScratchAdressToBuildInfo(scratchDataAddr, info);
             if(mode == vk::BuildAccelerationStructureModeKHR::eBuild)
                 scratchDataAddr += AlignUp(info.BuildSizes.buildScratchSize, (uint64_t)mAccelProperties.minAccelerationStructureScratchOffsetAlignment);
             else
                 scratchDataAddr += AlignUp(info.BuildSizes.updateScratchSize, (uint64_t)mAccelProperties.minAccelerationStructureScratchOffsetAlignment);
 		}
-        return outScratchBuffer;
-    }
-
-    AllocatedBuffer VulrayDevice::CreateScratchBufferBLAS(BLASBuildInfo &buildInfo)
-    {
-        uint32_t scratchSize = 0;
-        vk::BuildAccelerationStructureModeKHR mode = buildInfo.BuildGeometryInfo.mode;
-        if(mode == vk::BuildAccelerationStructureModeKHR::eBuild)
-            scratchSize = AlignUp(buildInfo.BuildSizes.buildScratchSize, (uint64_t)mAccelProperties.minAccelerationStructureScratchOffsetAlignment);
-        else
-            scratchSize = AlignUp(buildInfo.BuildSizes.updateScratchSize, (uint64_t)mAccelProperties.minAccelerationStructureScratchOffsetAlignment);
-
-        auto outScratchBuffer = CreateBuffer(scratchSize, 0,
-            vk::BufferUsageFlagBits::eStorageBuffer,
-            mAccelProperties.minAccelerationStructureScratchOffsetAlignment);
-
-        BindScratchBufferToBuildInfo(outScratchBuffer.DevAddress, buildInfo);
-
-        return outScratchBuffer;
-    }
-
-    void VulrayDevice::BindScratchBufferToBuildInfo(vk::DeviceAddress scratchBufferAddress, BLASBuildInfo& buildInfo)
-    {
-        buildInfo.BuildGeometryInfo.setScratchData(AlignUp(scratchBufferAddress, (uint64_t)mAccelProperties.minAccelerationStructureScratchOffsetAlignment));
     }
 
     //--------------------------------------------------------------------------------------
@@ -356,7 +343,7 @@ namespace vr
             .setMode(vk::BuildAccelerationStructureModeKHR::eBuild)
             .setDstAccelerationStructure(nullptr)
             .setPGeometries(outBuildInfo.Geometry.get())
-            .setGeometryCount(1);
+            .setGeometryCount(1); // MUST BE 1 (https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkAccelerationStructureBuildGeometryInfoKHR.html#VUID-VkAccelerationStructureBuildGeometryInfoKHR-type-03790)
 
         // Fill Range Info
         outBuildInfo.RangeInfo = vk::AccelerationStructureBuildRangeInfoKHR()
@@ -369,7 +356,7 @@ namespace vr
         mDevice.getAccelerationStructureBuildSizesKHR(
             vk::AccelerationStructureBuildTypeKHR::eDevice,
             &outBuildInfo.BuildGeometryInfo,
-            &info.MaxInstanceCount, // max number of instances/primitives in the geometry, which is always 1 for TLAS builds
+            &info.MaxInstanceCount, // max number of instances/primitives in the geometry
             &outBuildInfo.BuildSizes,
             mDynLoader); 
         
@@ -399,7 +386,7 @@ namespace vr
         return std::make_pair(outAccel, outBuildInfo);
     }
 
-    void VulrayDevice::BuildTLAS(TLASBuildInfo& buildInfo, 
+    void VulrayDevice::BuildTLAS(TLASBuildInfo& buildInfo,
             const AllocatedBuffer& InstanceBuffer, uint32_t instanceCount, 
             vk::CommandBuffer cmdBuf)
     {
@@ -444,24 +431,49 @@ namespace vr
 
     }
 
-    AllocatedBuffer VulrayDevice::CreateScratchBufferTLAS(TLASBuildInfo &buildInfo)
+    void VulrayDevice::BindScratchAdressToBuildInfo(vk::DeviceAddress scratchAddr, TLASBuildInfo& buildInfo)
     {
-        //Get the scratch buffer size
-        uint32_t scratchSize = buildInfo.BuildSizes.buildScratchSize;
-
-        //Create the scratch buffer
-        AllocatedBuffer scratchBuffer = CreateBuffer(scratchSize, 0,
-            vk::BufferUsageFlagBits::eStorageBuffer,
-            mAccelProperties.minAccelerationStructureScratchOffsetAlignment);
-
-        //Set the scratch buffer
-        BindScratchBufferToBuildInfo(scratchBuffer.DevAddress, buildInfo);
-        return scratchBuffer;
+        buildInfo.BuildGeometryInfo.setScratchData(AlignUp(scratchAddr, (uint64_t)mAccelProperties.minAccelerationStructureScratchOffsetAlignment));
     }
 
-    void VulrayDevice::BindScratchBufferToBuildInfo(vk::DeviceAddress scratchBufferAddress, TLASBuildInfo &buildInfo)
+    void VulrayDevice::BindScratchBufferToBuildInfos(const vr::AllocatedBuffer& buffer, std::vector<TLASBuildInfo>& buildInfos)
     {
-        buildInfo.BuildGeometryInfo.setScratchData(AlignUp(scratchBufferAddress, (uint64_t)mAccelProperties.minAccelerationStructureScratchOffsetAlignment));
+        vk::DeviceAddress scratchDataAddr = buffer.DevAddress;
+        for (auto& info : buildInfos)
+        {
+            vk::BuildAccelerationStructureModeKHR mode = info.BuildGeometryInfo.mode;
+            BindScratchAdressToBuildInfo(scratchDataAddr, info);
+            if(mode == vk::BuildAccelerationStructureModeKHR::eBuild)
+                scratchDataAddr += AlignUp(info.BuildSizes.buildScratchSize, (uint64_t)mAccelProperties.minAccelerationStructureScratchOffsetAlignment);
+            else
+                scratchDataAddr += AlignUp(info.BuildSizes.updateScratchSize, (uint64_t)mAccelProperties.minAccelerationStructureScratchOffsetAlignment);
+		}
+    }
+
+
+    uint32_t VulrayDevice::GetScratchBufferSize(const std::vector<TLASBuildInfo>& buildInfos)
+    {
+        uint32_t scratchSize = 0;
+        for (auto& info : buildInfos)
+        {
+            vk::BuildAccelerationStructureModeKHR mode = info.BuildGeometryInfo.mode;
+            if(mode == vk::BuildAccelerationStructureModeKHR::eBuild)
+                scratchSize += AlignUp(info.BuildSizes.buildScratchSize, (uint64_t)mAccelProperties.minAccelerationStructureScratchOffsetAlignment);
+            else
+                scratchSize += AlignUp(info.BuildSizes.updateScratchSize, (uint64_t)mAccelProperties.minAccelerationStructureScratchOffsetAlignment);
+        }
+        return scratchSize;
+    }
+
+    AllocatedBuffer VulrayDevice::CreateScratchBufferFromBuildInfos(std::vector<TLASBuildInfo> &buildInfos)
+    {
+        uint32_t scratchSize = GetScratchBufferSize(buildInfos);
+
+        auto outScratchBuffer = CreateScratchBuffer(scratchSize);
+
+        BindScratchBufferToBuildInfos(outScratchBuffer, buildInfos);
+
+        return outScratchBuffer;
     }
 
     void VulrayDevice::AddAccelerationBuildBarrier(vk::CommandBuffer cmdBuf)

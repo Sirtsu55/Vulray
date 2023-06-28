@@ -204,6 +204,8 @@ namespace vr
 
         for (uint32_t i = 0; i < blasCount; i++)
         {
+            if(sizes[i] == 0)
+                continue;
             // Create buffer
             AllocatedBuffer compactBuffer = CreateBuffer(sizes[i], 0, vk::BufferUsageFlagBits::eAccelerationStructureStorageKHR);
 
@@ -240,6 +242,8 @@ namespace vr
 
         for (uint32_t i = 0; i < blasCount; i++)
         {
+            if(sizes[i] == 0)
+                continue;
             // Create buffer
             AllocatedBuffer compactBuffer = CreateBuffer(sizes[i], 0, vk::BufferUsageFlagBits::eAccelerationStructureStorageKHR);
 

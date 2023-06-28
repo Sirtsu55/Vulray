@@ -178,10 +178,20 @@ namespace vr
         /// If the BLAS is updated regularly, it is recommended to create a separate scratch buffer for the updating BLAS and use the scratch buffer for the updating.
         [[nodiscard]] AllocatedBuffer CreateScratchBufferFromBuildInfos(std::vector<BLASBuildInfo>& buildInfos);
 
+        /// @brief Binds the scratch buffer to the build info
+        /// @param scratchBuffer The scratch buffer that will be bound
+        /// @param buildInfo The build info that will be bound to the scratch buffer
+        [[nodiscard]] AllocatedBuffer CreateScratchBufferFromBuildInfo(BLASBuildInfo& buildInfo);
+
         /// @brief Creates a SINGLE scratch buffer for building acceleration structure, and binds the scratch buffer to the build info
         /// @param buildInfo The build info that will be used to create the scratch buffer
         /// @return The scratch buffer
         [[nodiscard]] AllocatedBuffer CreateScratchBufferFromBuildInfos(std::vector<TLASBuildInfo>& buildInfo);
+
+        /// @brief Binds the scratch buffer to the build info
+        /// @param scratchBuffer The scratch buffer that will be bound
+        /// @param buildInfo The build info that will be bound to the scratch buffer
+        [[nodiscard]] AllocatedBuffer CreateScratchBufferFromBuildInfo(TLASBuildInfo& buildInfo);
 
         /// @brief Binds the scratch buffer to the build infos. Assumes that the whole scratch buffer is used for all the build infos.
         /// This function is useful, when you already have a scratch buffer and you want to use it for a build.

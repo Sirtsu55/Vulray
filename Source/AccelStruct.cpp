@@ -283,7 +283,19 @@ namespace vr
         return outScratchBuffer;
     }
 
-    void VulrayDevice::BindScratchAdressToBuildInfo(vk::DeviceAddress scratchAddr, BLASBuildInfo& buildInfo)
+    AllocatedBuffer VulrayDevice::CreateScratchBufferFromBuildInfo(BLASBuildInfo &buildInfo)
+    {
+        uint32_t scratchSize = buildInfo.BuildGeometryInfo.mode == vk::BuildAccelerationStructureModeKHR::eBuild ?
+            buildInfo.BuildSizes.buildScratchSize : buildInfo.BuildSizes.updateScratchSize;
+
+        auto outScratchBuffer = CreateScratchBuffer(scratchSize);
+
+        BindScratchAdressToBuildInfo(outScratchBuffer.DevAddress, buildInfo);
+
+        return outScratchBuffer;
+    }
+
+    void VulrayDevice::BindScratchAdressToBuildInfo(vk::DeviceAddress scratchAddr, BLASBuildInfo &buildInfo)
     {
         buildInfo.BuildGeometryInfo.setScratchData(AlignUp(scratchAddr, (uint64_t)mAccelProperties.minAccelerationStructureScratchOffsetAlignment));
     }
@@ -472,6 +484,18 @@ namespace vr
         auto outScratchBuffer = CreateScratchBuffer(scratchSize);
 
         BindScratchBufferToBuildInfos(outScratchBuffer, buildInfos);
+
+        return outScratchBuffer;
+    }
+
+    AllocatedBuffer VulrayDevice::CreateScratchBufferFromBuildInfo(TLASBuildInfo &buildInfo)
+    {
+        uint32_t scratchSize = buildInfo.BuildGeometryInfo.mode == vk::BuildAccelerationStructureModeKHR::eBuild ?
+            buildInfo.BuildSizes.buildScratchSize : buildInfo.BuildSizes.updateScratchSize;
+
+        auto outScratchBuffer = CreateScratchBuffer(scratchSize);
+
+        BindScratchAdressToBuildInfo(outScratchBuffer.DevAddress, buildInfo);
 
         return outScratchBuffer;
     }

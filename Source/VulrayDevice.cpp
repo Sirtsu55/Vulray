@@ -6,12 +6,12 @@
 namespace vr
 {
     VulrayDevice::VulrayDevice(vk::Instance inst, vk::Device dev, vk::PhysicalDevice physDev)
-		: mInstance(inst), mDevice(dev), mPhysicalDevice(physDev)
+        : mInstance(inst), mDevice(dev), mPhysicalDevice(physDev)
     {
 
         mDynLoader.init(inst, vkGetInstanceProcAddr, dev, vkGetDeviceProcAddr);
 
-        //Create allocator for accelstructs
+        // Create allocator for accelstructs
         VmaAllocatorCreateInfo allocatorInfo = {};
         allocatorInfo.physicalDevice = physDev;
         allocatorInfo.device = dev;
@@ -20,8 +20,7 @@ namespace vr
 
         vmaCreateAllocator(&allocatorInfo, &mVMAllocator);
 
-        
-        //Get ray tracing and accel properties
+        // Get ray tracing and accel properties
         auto deviceProperties = vk::PhysicalDeviceProperties2KHR();
         deviceProperties.pNext = &mRayTracingProperties;
         mRayTracingProperties.pNext = &mAccelProperties;
@@ -32,8 +31,6 @@ namespace vr
 
         mDeviceProperties = mPhysicalDevice.getProperties();
     }
-    
-
 
     VulrayDevice::~VulrayDevice()
     {
@@ -48,8 +45,9 @@ namespace vr
         return cmdBuf;
     }
 
-    std::vector<vk::CommandBuffer> VulrayDevice::CreateCommandBuffers(vk::CommandPool pool, uint32_t count, vk::CommandBufferLevel level)
+    std::vector<vk::CommandBuffer> VulrayDevice::CreateCommandBuffers(vk::CommandPool pool, uint32_t count,
+                                                                      vk::CommandBufferLevel level)
     {
         return mDevice.allocateCommandBuffers(vk::CommandBufferAllocateInfo(pool, level, count));
     }
-}
+} // namespace vr

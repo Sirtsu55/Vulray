@@ -1,4 +1,5 @@
 #pragma once
+
 #include "Vulray/Buffer.h"
 
 namespace vr
@@ -7,24 +8,25 @@ namespace vr
     struct GeometryDeviceAddress
     {
         GeometryDeviceAddress() = default;
-        GeometryDeviceAddress(vk::DeviceAddress vertexOrAABBDevAddress, vk::DeviceAddress indexDevAddress): 
-            VertexDevAddress(vertexOrAABBDevAddress), IndexDevAddress(indexDevAddress) {}
-
-        union 
+        GeometryDeviceAddress(vk::DeviceAddress vertexOrAABBDevAddress, vk::DeviceAddress indexDevAddress)
+            : VertexDevAddress(vertexOrAABBDevAddress), IndexDevAddress(indexDevAddress)
         {
+        }
+
+        union {
             vk::DeviceAddress VertexDevAddress;
-            vk::DeviceAddress AABBDevAddress; 
+            vk::DeviceAddress AABBDevAddress;
         };
 
         /// @brief Device address of the index buffer, only used for triangles
         vk::DeviceAddress IndexDevAddress = {};
 
-        /// @brief Buffer containing the transform for the geometry, if this is null, the geometry will use the identity matrix
+        /// @brief Buffer containing the transform for the geometry, if this is null, the geometry will use the identity
+        /// matrix
         vk::DeviceAddress TransformDevAddress = {};
     };
 
-
-struct GeometryData
+    struct GeometryData
     {
         /// @brief Type of geometry, either triangles or AABBs
         vk::GeometryTypeKHR Type = vk::GeometryTypeKHR::eTriangles;
@@ -39,13 +41,13 @@ struct GeometryData
         vk::Format VertexFormat = vk::Format::eR32G32B32Sfloat;
 
         /// @brief Stride of each element in the vertex buffer or AABB buffer
-        uint32_t Stride = 0; 
+        uint32_t Stride = 0;
 
         /// @brief Number of primitives in the geometry, such as triangles or AABBs
         uint32_t PrimitiveCount = 0;
 
         ///@brief Flags for the geometry, Default is eOpaque
-        vk::GeometryFlagsKHR Flags = vk::GeometryFlagBitsKHR::eOpaque; 
+        vk::GeometryFlagsKHR Flags = vk::GeometryFlagBitsKHR::eOpaque;
     };
 
     //--------------------------------------------------------------------------------------
@@ -71,7 +73,6 @@ struct GeometryData
         /// @brief Contains the build info for the acceleration structure
         vk::AccelerationStructureBuildGeometryInfoKHR BuildGeometryInfo = {};
 
-
         // The following are shared_ptr, to avoid std::vector reallocation when copied around
         // We could use std::vector, but it expects the function to be noexcept,
         // which reverts to copying, because the functions can throw exceptions
@@ -83,7 +84,7 @@ struct GeometryData
 
         /// @brief Build ranges info for building the acceleration structure
         std::shared_ptr<vk::AccelerationStructureBuildRangeInfoKHR[]> Ranges = nullptr;
-        
+
         uint32_t RangesCount = 0;
     };
 
@@ -104,7 +105,8 @@ struct GeometryData
         /// @brief This is the build info that was given when creating the destination BLAS, which will be reused
         BLASBuildInfo SourceBuildInfo = {};
 
-        /// @brief If the updated geometries are in different buffers, NewGeometryAddresses will contain the device addresses of the primitives
+        /// @brief If the updated geometries are in different buffers, NewGeometryAddresses will contain the device
+        /// addresses of the primitives
         /// @note This field can be null if the updated geometries are in the same buffers as the source BLAS
         ///       The size of the vector must be the same as the number of geometries in @c SourceBuildInfo
         ///       Transform buffer must be provided if the source BLAS had a transform buffer, else it must be null
@@ -119,9 +121,6 @@ struct GeometryData
         /// @brief All the BLASes that will be compacted
         std::vector<vk::AccelerationStructureKHR> SourceBLAS = {};
     };
-
-
-
 
     //--------------------------------------------------------------------------------------
     // TLAS STRUCTUES
@@ -139,12 +138,11 @@ struct GeometryData
         vk::BuildAccelerationStructureFlagsKHR Flags = vk::BuildAccelerationStructureFlagBitsKHR::ePreferFastTrace;
     };
 
-    
     struct TLASBuildInfo
     {
         /// @brief Contains the build sizes for the acceleration structure
         vk::AccelerationStructureBuildSizesInfoKHR BuildSizes = {};
-        
+
         /// @brief Contains the build info for the acceleration structure
         vk::AccelerationStructureBuildGeometryInfoKHR BuildGeometryInfo = {};
 
@@ -156,7 +154,6 @@ struct GeometryData
 
         /// @brief Max number of instances that can be added to the TLAS
         uint32_t MaxInstanceCount = 0;
-
     };
 
     struct TLASHandle
@@ -168,6 +165,4 @@ struct GeometryData
         AllocatedBuffer Buffer = {};
     };
 
- 
-
-} 
+} // namespace vr

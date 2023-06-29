@@ -2,6 +2,6 @@
 
 namespace vr
 {
-	VulrayLogCallback LogCallback = nullptr;
-	
+    VulrayLogCallback LogCallback = nullptr;
+
 }

@@ -1,14 +1,13 @@
 #pragma once
 
-
 namespace vr
 {
     /// @brief Structure of a Buffer used for calls with Vulray
     struct AllocatedBuffer
     {
         /// @brief The allocation for the buffer, if this is null, the buffer is not allocated by Vulray
-        /// @note If this is not null, the buffer is allocated by Vulray and should be freed by calling DestroyBuffer(...)
-        /// If the buffer is allocated by the user, they do not need to set this field.
+        /// @note If this is not null, the buffer is allocated by Vulray and should be freed by calling
+        /// DestroyBuffer(...) If the buffer is allocated by the user, they do not need to set this field.
         VmaAllocation Allocation = nullptr;
 
         /// @brief The raw buffer handle
@@ -37,12 +36,12 @@ namespace vr
         /// @note If this is not null, the image is allocated by Vulray and should be freed by calling DestroyImage(...)
         /// If the buffer is allocated by the user, they do not need to set this field.
         VmaAllocation Allocation = nullptr;
-        
+
         /// @brief The raw image handle
         vk::Image Image = nullptr;
-        
+
         uint32_t Width = 0;
-        
+
         uint32_t Height = 0;
 
         uint64_t Size = 0;
@@ -73,4 +72,4 @@ namespace vr
     /// @param alignment The alignment to align the value to
     /// @return The aligned value
     uint64_t AlignUp(uint64_t value, uint64_t alignment);
-}
+} // namespace vr

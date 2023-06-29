@@ -8,28 +8,26 @@ namespace vr
 {
     namespace Denoise
     {
-        
+
         class GaussianBlurDenoiser : public DenoiserInterface
         {
-        public:
-
+          public:
             GaussianBlurDenoiser(vr::VulrayDevice* device, uint32_t width, uint32_t height);
             ~GaussianBlurDenoiser() override;
 
             GaussianBlurDenoiser() = delete;
             GaussianBlurDenoiser(const GaussianBlurDenoiser&) = delete;
-            
+
             // Override the base class functions
 
             void Initialize(vk::ImageUsageFlags inputUsage = (vk::ImageUsageFlags)0,
-                vk::ImageUsageFlags outputUsage = (vk::ImageUsageFlags)0) override;
+                            vk::ImageUsageFlags outputUsage = (vk::ImageUsageFlags)0) override;
 
             std::vector<Resource> GetRequiredResources() override;
 
             void Denoise(vk::CommandBuffer cmdBuffer) override;
-            
-        private:
 
+          private:
             std::vector<DescriptorItem> mDescriptorItems = {};
             vk::DescriptorSetLayout mDescriptorSetLayout = nullptr;
             DescriptorBuffer mDescriptorBuffer = {};
@@ -39,7 +37,7 @@ namespace vr
 
             vk::ShaderModule mShaderModule = nullptr;
 
-        public:
+          public:
             /// @brief The settings for the gaussian blur
             struct Settings
             {
@@ -49,7 +47,8 @@ namespace vr
                 /// @brief The sigma value for the gaussian blur, smoothness
                 float Sigma = 1.0f;
             };
-        private:
+
+          private:
             // Data for the push constants
             struct PushConstantData
             {
@@ -58,5 +57,5 @@ namespace vr
                 Settings DenoiserSettings;
             };
         };
-    }
-}
+    } // namespace Denoise
+} // namespace vr

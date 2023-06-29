@@ -80,7 +80,7 @@ namespace vr
     };
 
     /// @brief Structure that defines the information needed to create a shader binding table
-    struct ShaderBindingTableInfo
+    struct SBTInfo
     {
         /// @brief The size of each ray gen shader record in bytes
         uint32_t RayGenShaderRecordSize     = 0;

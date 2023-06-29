@@ -2,16 +2,16 @@
 
 namespace vr
 {
-    Shader VulrayDevice::CreateShaderFromSPV(ShaderCreateInfo& info)
+    Shader VulrayDevice::CreateShaderFromSPV(const std::vector<uint32_t>& spv)
     {
         Shader outShader = {};
-        if(info.SPIRVCode.empty())
+        if(spv.empty())
         {
             VULRAY_LOG_ERROR("ShaderCreateInfo must have SPIRV code");
             return outShader; // return empty shader, because no shader was created
         }
 
-        outShader.Module = CreateShaderModule(info.SPIRVCode);
+        outShader.Module = CreateShaderModule(spv);
 
         return outShader;
     }

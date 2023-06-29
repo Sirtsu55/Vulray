@@ -69,7 +69,7 @@ namespace vr
         }
     }
 
-    SBTBuffer VulrayDevice::CreateSBT(vk::Pipeline pipeline, const ShaderBindingTableInfo& sbt)
+    SBTBuffer VulrayDevice::CreateSBT(vk::Pipeline pipeline, const SBTInfo& sbt)
     {
         SBTBuffer outSBT;
 
@@ -189,7 +189,7 @@ namespace vr
         return outSBT;
     }
 
-    bool VulrayDevice::RebuildSBT(vk::Pipeline pipeline, SBTBuffer &buffer, const ShaderBindingTableInfo &sbt)
+    bool VulrayDevice::RebuildSBT(vk::Pipeline pipeline, SBTBuffer &buffer, const SBTInfo &sbt)
     {
         if(!CanSBTFitShaders(buffer, sbt))
             return false;
@@ -321,7 +321,7 @@ namespace vr
             UnmapBuffer(src.CallableBuffer);
     }
 
-    bool VulrayDevice::CanSBTFitShaders(SBTBuffer &buffer, const ShaderBindingTableInfo &sbtInfo)
+    bool VulrayDevice::CanSBTFitShaders(SBTBuffer &buffer, const SBTInfo &sbtInfo)
     {
         bool extendable = true;
 

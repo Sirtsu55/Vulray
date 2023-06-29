@@ -346,7 +346,7 @@ namespace vr
         /// @brief Creates a shader object from SPIRV code
         /// @param info The information that will be used to create the shader module
         /// @return The created shader module
-        [[nodiscard]] Shader CreateShaderFromSPV(ShaderCreateInfo &info);
+        [[nodiscard]] Shader CreateShaderFromSPV(const std::vector<uint32_t>& spv);
 
         /// @brief Creates a shader module from SPIRV code
         /// @param spvCode The SPIRV code that will be used to create the shader module
@@ -378,7 +378,7 @@ namespace vr
         /// @param flags The flags that will be used to create the pipeline, default is eDescriptorBufferEXT
         /// @param deferredOp The deferred operation that will be used to create the pipeline, default is nullptr
         /// @return The created ray tracing pipeline and the shader binding table info to create the shader binding table
-        [[nodiscard]] std::pair<vk::Pipeline, ShaderBindingTableInfo> CreateRayTracingPipeline(
+        [[nodiscard]] std::pair<vk::Pipeline, SBTInfo> CreateRayTracingPipeline(
             const RayTracingShaderCollection &shaderCollection,
             PipelineSettings &settings,
             vk::PipelineCreateFlags flags = vk::PipelineCreateFlagBits::eDescriptorBufferEXT,
@@ -392,7 +392,7 @@ namespace vr
         /// @param flags The flags that will be used to create the pipeline, default is eDescriptorBufferEXT
         /// @param deferredOp The deferred operation that will be used to create the pipeline, default is nullptr
         /// @return The created ray tracing pipeline and the shader binding table info to create the shader binding table
-        [[nodiscard]] std::pair<vk::Pipeline, ShaderBindingTableInfo> CreateRayTracingPipeline(
+        [[nodiscard]] std::pair<vk::Pipeline, SBTInfo> CreateRayTracingPipeline(
             const std::vector<RayTracingShaderCollection> &shaderCollections,
             PipelineSettings &settings,
             vk::PipelineCreateFlags flags = vk::PipelineCreateFlagBits::eDescriptorBufferEXT,
@@ -408,10 +408,10 @@ namespace vr
         /// @param flags The flags that will be used to create the pipeline, default is eDescriptorBufferEXT
         /// @param deferredOp The deferred operation that will be used to create the pipeline, default is nullptr
         /// @return The created ray tracing pipeline and the shader binding table info to create the shader binding table
-        [[nodiscard]] std::pair<vk::Pipeline, ShaderBindingTableInfo> CreateRayTracingPipeline(
+        [[nodiscard]] std::pair<vk::Pipeline, SBTInfo> CreateRayTracingPipeline(
             const std::vector<RayTracingShaderCollection> &shaderCollections,
             PipelineSettings &settings,
-            ShaderBindingTableInfo &sbtInfoOld,
+            SBTInfo &sbtInfoOld,
             vk::PipelineCreateFlags flags = vk::PipelineCreateFlagBits::eDescriptorBufferEXT,
             vk::DeferredOperationKHR deferredOp = nullptr);
 
@@ -569,7 +569,7 @@ namespace vr
         /// @param sbt The information about the shader binding table, must contain the indices of the shader groups in the pipeline
         /// @return The SBT buffer object, which has buffers and vk::StridedDeviceAddressRegionKHR for each shader type in the shader binding table
         /// ready to be used in dispatching rays.
-        [[nodiscard]] SBTBuffer CreateSBT(vk::Pipeline pipeline, const ShaderBindingTableInfo &sbt);
+        [[nodiscard]] SBTBuffer CreateSBT(vk::Pipeline pipeline, const SBTInfo &sbt);
 
         /// @brief Rebuilds the SBT buffer with the new shader binding table info
         /// @param pipeline The pipeline that will be used to rebuild the SBT buffer
@@ -580,7 +580,7 @@ namespace vr
         /// reserve more space for the shaders.
         /// @note This function doesn't reallocate the SBT buffer, it just rewrites the new opaque handles to the buffer.
         /// So you don't have to WriteToSBT(...) again after rebuilding the SBT buffer.
-        bool RebuildSBT(vk::Pipeline pipeline, SBTBuffer &buffer, const ShaderBindingTableInfo &sbt);
+        bool RebuildSBT(vk::Pipeline pipeline, SBTBuffer &buffer, const SBTInfo &sbt);
 
         /// @brief Copies the whole SBT from a buffer to another, including the opaque handles.
         /// @param dst The SBT buffer that will be copied to
@@ -595,7 +595,7 @@ namespace vr
         /// @param buffer The SBT buffer that will be checked
         /// @param sbtInfo The shader binding table info with the shader info that will be checked
         /// @return True if the SBT buffer has room to encapsulate the all the shaders in the shader binding table info, false otherwise
-        bool CanSBTFitShaders(SBTBuffer &buffer, const ShaderBindingTableInfo &sbtInfo);
+        bool CanSBTFitShaders(SBTBuffer &buffer, const SBTInfo &sbtInfo);
 
         /// @brief Destroys the SBT buffer
         /// @param buffer The SBT buffer that will be destroyed

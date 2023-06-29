@@ -2,13 +2,6 @@
 
 namespace vr
 {
-    /// @brief Structure that is used to create a shader module
-    struct ShaderCreateInfo
-    {
-        /// @brief The SPIRV code that will be used to create the shader module
-        std::vector<uint32_t> SPIRVCode;
-    };
-
     struct Shader
     {
         /// @brief Shader module handle

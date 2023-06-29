@@ -122,13 +122,13 @@ namespace vr
         return std::make_pair(std::move(shaderStages), std::move(shaderGroups));
     }
 
-    std::pair<vk::Pipeline, ShaderBindingTableInfo> VulrayDevice::CreateRayTracingPipeline(
+    std::pair<vk::Pipeline, SBTInfo> VulrayDevice::CreateRayTracingPipeline(
         const RayTracingShaderCollection &shaderCollection, 
         PipelineSettings &settings, 
         vk::PipelineCreateFlags flags, 
         vk::DeferredOperationKHR deferredOp)
     {
-        vr::ShaderBindingTableInfo sbtInfo = {};
+        vr::SBTInfo sbtInfo = {};
 
         uint32_t pipelineIndex = 0; // index of shader in the compiled pipeline
 
@@ -167,13 +167,13 @@ namespace vr
 
         return std::make_pair(res.value, sbtInfo);
     }
-    std::pair<vk::Pipeline, ShaderBindingTableInfo> VulrayDevice::CreateRayTracingPipeline(
+    std::pair<vk::Pipeline, SBTInfo> VulrayDevice::CreateRayTracingPipeline(
         const std::vector<RayTracingShaderCollection> &shaderCollections,
         PipelineSettings &settings,
         vk::PipelineCreateFlags flags,
         vk::DeferredOperationKHR deferredOp)
     {
-        vr::ShaderBindingTableInfo sbtInfo = {};
+        vr::SBTInfo sbtInfo = {};
 
         std::vector<vk::Pipeline> libPipelines = {};
         libPipelines.reserve(shaderCollections.size());
@@ -221,9 +221,9 @@ namespace vr
         return std::make_pair(res.value, sbtInfo);
     }
 
-    std::pair<vk::Pipeline, ShaderBindingTableInfo> VulrayDevice::CreateRayTracingPipeline(const std::vector<RayTracingShaderCollection> &shaderCollections, PipelineSettings &settings, ShaderBindingTableInfo &sbtInfoOld, vk::PipelineCreateFlags flags, vk::DeferredOperationKHR deferredOp)
+    std::pair<vk::Pipeline, SBTInfo> VulrayDevice::CreateRayTracingPipeline(const std::vector<RayTracingShaderCollection> &shaderCollections, PipelineSettings &settings, SBTInfo &sbtInfoOld, vk::PipelineCreateFlags flags, vk::DeferredOperationKHR deferredOp)
     {
-        std::pair<vk::Pipeline, ShaderBindingTableInfo> pipelineInfo = CreateRayTracingPipeline(shaderCollections, settings, flags, deferredOp);
+        std::pair<vk::Pipeline, SBTInfo> pipelineInfo = CreateRayTracingPipeline(shaderCollections, settings, flags, deferredOp);
         pipelineInfo.second.RayGenShaderRecordSize = sbtInfoOld.RayGenShaderRecordSize;
         pipelineInfo.second.MissShaderRecordSize = sbtInfoOld.MissShaderRecordSize;
         pipelineInfo.second.HitGroupRecordSize = sbtInfoOld.HitGroupRecordSize;

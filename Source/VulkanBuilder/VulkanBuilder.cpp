@@ -195,12 +195,12 @@ namespace vr
 
         if(!gQ.has_value())
         {
+            qValid = false;
             VULRAY_FLOG_ERROR("Device doesn't have a Graphics Queue, Error: %s", gQ.error().message());
-            return {};
         }
         if(!cQ.has_value())
         {
-            qValid = true;
+            qValid = false;
             VULRAY_FLOG_ERROR("Device doesn't have a Compute Queue, Error: %s", cQ.error().message());
         }
         if(!tQ.has_value())
@@ -255,7 +255,7 @@ namespace vr
         {
         }
 
-    SwapchainStructs SwapchainBuilder::BuildSwapchain(vk::SwapchainKHR oldswapchain)
+    SwapchainResources SwapchainBuilder::BuildSwapchain(vk::SwapchainKHR oldswapchain)
     {
         assert(Height != 0);
         assert(Width != 0);
@@ -346,16 +346,16 @@ namespace vr
     }
 
     
-    void SwapchainBuilder::DestroySwapchain(vk::Device device, const SwapchainStructs &structs)
+    void SwapchainBuilder::DestroySwapchain(vk::Device device, const SwapchainResources &res)
     {
-        device.destroySwapchainKHR(structs.SwapchainHandle);
+        device.destroySwapchainKHR(res.SwapchainHandle);
 
-        for(auto i : structs.SwapchainImageViews)
+        for(auto i : res.SwapchainImageViews)
             device.destroyImageView(i);
     }
-    void SwapchainBuilder::DestroySwapchainResources(vk::Device device, const SwapchainStructs &structs)
+    void SwapchainBuilder::DestroySwapchainResources(vk::Device device, const SwapchainResources &res)
     {
-        for(auto i : structs.SwapchainImageViews)
+        for(auto i : res.SwapchainImageViews)
             device.destroyImageView(i);
     }
 }

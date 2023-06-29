@@ -429,7 +429,7 @@ namespace vr
         /// @param flags The flags that will be used to create the pipeline library, default is eDescriptorBufferEXT
         /// @param deferredOp The deferred operation that will be used to create the pipeline library, default is nullptr
         /// @return shaderCollection::CollectionPipeline is set to the created pipeline library
-        [[nodiscard]] void CreatePipelineLibrary(RayTracingShaderCollection &shaderCollection,
+        void CreatePipelineLibrary(RayTracingShaderCollection &shaderCollection,
                                                  PipelineSettings &settings,
                                                  vk::PipelineCreateFlags flags = vk::PipelineCreateFlagBits::eDescriptorBufferEXT,
                                                  vk::DeferredOperationKHR deferredOp = nullptr);

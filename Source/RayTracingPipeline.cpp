@@ -163,7 +163,7 @@ namespace vr
     }
     std::pair<vk::Pipeline, SBTInfo> VulrayDevice::CreateRayTracingPipeline(
         const std::vector<RayTracingShaderCollection>& shaderCollections, PipelineSettings& settings,
-        vk::PipelineCreateFlags flags, vk::DeferredOperationKHR deferredOp)
+        vk::PipelineCreateFlags flags, vk::PipelineCache cache, vk::DeferredOperationKHR deferredOp)
     {
         vr::SBTInfo sbtInfo = {};
 
@@ -198,7 +198,7 @@ namespace vr
                                 .setPLibraryInfo(&libraryInfo)
                                 .setLayout(settings.PipelineLayout);
 
-        auto res = mDevice.createRayTracingPipelineKHR(deferredOp, nullptr, pipelineInfo, nullptr, mDynLoader);
+        auto res = mDevice.createRayTracingPipelineKHR(deferredOp, cache, pipelineInfo, nullptr, mDynLoader);
         // when deferredOp is not null, the pipeline is created asynchronously, so it doesn't return success or failure
         if (res.result != vk::Result::eSuccess && res.result != vk::Result::eOperationDeferredKHR)
         {
@@ -211,10 +211,11 @@ namespace vr
 
     std::pair<vk::Pipeline, SBTInfo> VulrayDevice::CreateRayTracingPipeline(
         const std::vector<RayTracingShaderCollection>& shaderCollections, PipelineSettings& settings,
-        SBTInfo& sbtInfoOld, vk::PipelineCreateFlags flags, vk::DeferredOperationKHR deferredOp)
+        SBTInfo& sbtInfoOld, vk::PipelineCreateFlags flags, vk::PipelineCache cache,
+        vk::DeferredOperationKHR deferredOp)
     {
         std::pair<vk::Pipeline, SBTInfo> pipelineInfo =
-            CreateRayTracingPipeline(shaderCollections, settings, flags, deferredOp);
+            CreateRayTracingPipeline(shaderCollections, settings, flags, cache, deferredOp);
         pipelineInfo.second.RayGenShaderRecordSize = sbtInfoOld.RayGenShaderRecordSize;
         pipelineInfo.second.MissShaderRecordSize = sbtInfoOld.MissShaderRecordSize;
         pipelineInfo.second.HitGroupRecordSize = sbtInfoOld.HitGroupRecordSize;
@@ -224,7 +225,8 @@ namespace vr
     }
 
     void VulrayDevice::CreatePipelineLibrary(RayTracingShaderCollection& shaderCollection, PipelineSettings& settings,
-                                             vk::PipelineCreateFlags flags, vk::DeferredOperationKHR deferredOp)
+                                             vk::PipelineCreateFlags flags, vk::PipelineCache cache,
+                                             vk::DeferredOperationKHR deferredOp)
     {
         vk::RayTracingPipelineInterfaceCreateInfoKHR interfaceInfo =
             vk::RayTracingPipelineInterfaceCreateInfoKHR()
@@ -241,7 +243,7 @@ namespace vr
                                 .setGroups(shderGroups)
                                 .setStages(shaderStages);
 
-        auto res = mDevice.createRayTracingPipelineKHR(deferredOp, nullptr, pipelineInfo, nullptr, mDynLoader);
+        auto res = mDevice.createRayTracingPipelineKHR(deferredOp, cache, pipelineInfo, nullptr, mDynLoader);
 
         // when deferredOp is not null, the pipeline is created asynchronously, so it doesn't return success or failure
         if (res.result != vk::Result::eSuccess && res.result != vk::Result::eOperationDeferredKHR)

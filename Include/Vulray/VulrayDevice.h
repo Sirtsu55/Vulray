@@ -420,13 +420,14 @@ namespace vr
         /// @param settings The settings that will be used to create the pipeline. All the pipelines in the
         /// shaderCollections must have been created with the same settings.
         /// @param flags The flags that will be used to create the pipeline, default is eDescriptorBufferEXT
+        /// @param cache The pipeline cache that will be used to create the pipeline, default is nullptr
         /// @param deferredOp The deferred operation that will be used to create the pipeline, default is nullptr
         /// @return The created ray tracing pipeline and the shader binding table info to create the shader binding
         /// table
         [[nodiscard]] std::pair<vk::Pipeline, SBTInfo> CreateRayTracingPipeline(
             const std::vector<RayTracingShaderCollection>& shaderCollections, PipelineSettings& settings,
             vk::PipelineCreateFlags flags = vk::PipelineCreateFlagBits::eDescriptorBufferEXT,
-            vk::DeferredOperationKHR deferredOp = nullptr);
+            vk::PipelineCache cache = nullptr, vk::DeferredOperationKHR deferredOp = nullptr);
 
         /// @brief Convenience function that calls CreateRayTracingPipeline(...) and then copies the shader record sizes
         /// to the shader binding table info from the old shader binding table info to the new shader binding table
@@ -437,13 +438,14 @@ namespace vr
         /// @param sbtInfoOld The old shader binding table info that will be used to create the new shader binding table
         /// info
         /// @param flags The flags that will be used to create the pipeline, default is eDescriptorBufferEXT
+        /// @param cache The pipeline cache that will be used to create the pipeline, default is nullptr
         /// @param deferredOp The deferred operation that will be used to create the pipeline, default is nullptr
         /// @return The created ray tracing pipeline and the shader binding table info to create the shader binding
         /// table
         [[nodiscard]] std::pair<vk::Pipeline, SBTInfo> CreateRayTracingPipeline(
             const std::vector<RayTracingShaderCollection>& shaderCollections, PipelineSettings& settings,
             SBTInfo& sbtInfoOld, vk::PipelineCreateFlags flags = vk::PipelineCreateFlagBits::eDescriptorBufferEXT,
-            vk::DeferredOperationKHR deferredOp = nullptr);
+            vk::PipelineCache cache = nullptr, vk::DeferredOperationKHR deferredOp = nullptr);
 
         /// @todo If an issue to anyone, then add support for creation of pipelines even when shaders are destroyed.
         /// in theory this is already possible, because we don't use the modules for anything other than pipeline
@@ -457,12 +459,13 @@ namespace vr
         /// @param shaderCollection The shader collection that will be used to create the pipeline library
         /// @param settings The settings that will be used to create the pipeline library
         /// @param flags The flags that will be used to create the pipeline library, default is eDescriptorBufferEXT
+        /// @param cache The pipeline cache that will be used to create the pipeline library, default is nullptr
         /// @param deferredOp The deferred operation that will be used to create the pipeline library, default is
         /// nullptr
         /// @return shaderCollection::CollectionPipeline is set to the created pipeline library
         void CreatePipelineLibrary(RayTracingShaderCollection& shaderCollection, PipelineSettings& settings,
                                    vk::PipelineCreateFlags flags = vk::PipelineCreateFlagBits::eDescriptorBufferEXT,
-                                   vk::DeferredOperationKHR deferredOp = nullptr);
+                                   vk::PipelineCache cache = nullptr, vk::DeferredOperationKHR deferredOp = nullptr);
 
         /// @brief Destroys the shader module
         /// @param shader The shader module that will be destroyed

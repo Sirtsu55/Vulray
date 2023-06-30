@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Vulray/Shader.h"
+
 namespace vr
 {
     /// @brief Enum that defines the type of shader in the shader binding table

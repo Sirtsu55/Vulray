@@ -94,9 +94,13 @@ IncludeBlocks: Regroup
 IncludeIsMainRegex: ()?$
 IncludeIsMainSourceRegex: ""
 IncludeCategories:
-  - Regex:           '(Vulray)/'
+  - Regex:           '<(.*)>'
     Priority:        0
     SortPriority:    0
+    CaseSensitive:   true
+  - Regex:           '(Vulray)/'
+    Priority:        1
+    SortPriority:    1
     CaseSensitive:   true
 IndentAccessModifiers: false
 IndentCaseBlocks: false

@@ -1,13 +1,5 @@
 ﻿#pragma once
 
-// STL
-#include "Vulray/AccelStruct.h"
-#include "Vulray/Buffer.h"
-#include "Vulray/Descriptors.h"
-#include "Vulray/SBT.h"
-#include "Vulray/Shader.h"
-#include "Vulray/VulrayDevice.h"
-
 #include <iostream>
 #include <memory>
 #include <numeric>
@@ -15,6 +7,13 @@
 #include <vector>
 #include <vk_mem_alloc.h>
 #include <vulkan/vulkan.hpp>
+
+#include "Vulray/AccelStruct.h"
+#include "Vulray/Buffer.h"
+#include "Vulray/Descriptors.h"
+#include "Vulray/SBT.h"
+#include "Vulray/Shader.h"
+#include "Vulray/VulrayDevice.h"
 
 #define VULRAY_LOG_STREAM std::cerr
 #define VULRAY_LOG_END "\033[0m"

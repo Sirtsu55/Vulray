@@ -21,6 +21,7 @@ Using the library does precede some basic understanding of Vulkan objects.
 
 VulraySamples has examples of using the Vulray Library with explanations: https://github.com/Sirtsu55/VulraySamples
 
+It also has a RTIOW - like tutorial: https://sirtsu55.github.io/blog/RayTracing/VulrayInOneWeekend/Chapter0.html
 ## Requirements
 - Vulkan SDK 1.3
 - Vulkan Ray Tracing capable device. [Check GPU for support](https://vulkan.gpuinfo.org/listdevicescoverage.php?extension=VK_KHR_ray_tracing_pipeline&platform=all)
@@ -34,6 +35,9 @@ VulraySamples has examples of using the Vulray Library with explanations: https:
 - Add ```{install_folder}/Vulray/``` as link directory and link with ```Vulray.lib```
 - Refer to [VulraySamples](https://github.com/Sirtsu55/VulraySamples
 ) if stuck
-  
+
+## Feature Request & Contributing
+If you want a feature please open an Issue and I will try to add it. Denoiser suggestions or other ray tracing features  are welcome. Contributing via pull requests are welcome also.
+
 ## Flexible and Transparent? Yes
 Vulray exposes native Vulkan handles to the user. Some steps of creating objects can be done by the user, as long as the appropriate fields are filled for upcoming steps. For example, user can chose to create an index buffer with their own code, but the Vulray's structure for a Buffer has to be filled by the user manually to continue using Vulray functions.

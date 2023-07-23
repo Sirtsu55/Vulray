@@ -78,6 +78,8 @@ namespace vr
 
         // set nullptr to use default Vulray callback
         PFN_vkDebugUtilsMessengerCallbackEXT DebugCallback = nullptr;
+        // The pointer to the debug callback user data
+        void* DebugCallbackUserData = nullptr;
 
       private:
         std::shared_ptr<void> _StructData = nullptr;

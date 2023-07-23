@@ -51,6 +51,7 @@ namespace vr
         if (EnableDebug)
         {
             instBuilder.request_validation_layers()
+                .set_debug_callback_user_data_pointer(DebugCallbackUserData)
                 .set_debug_callback(DebugCallback == nullptr ? VulrayVulkanDebugCback : DebugCallback)
                 .set_debug_messenger_severity(
                     (VkDebugUtilsMessageSeverityFlagsEXT)(vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning |

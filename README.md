@@ -32,7 +32,7 @@ It also has a RTIOW - like tutorial: https://sirtsu55.github.io/blog/RayTracing/
 - Add as submodule or download the files
 - Add ```add_subdirectory("{install_folder}/Vulray")``` to your ```CMakeLists.txt```
 - Add Include Directory ```Vulray/Include/```
-- Add ```{install_folder}/Vulray/``` as link directory and link with ```Vulray.lib```
+- Link with `Vulray` CMake Target
 - Refer to [VulraySamples](https://github.com/Sirtsu55/VulraySamples
 ) if stuck
 

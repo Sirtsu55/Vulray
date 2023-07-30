@@ -12,22 +12,19 @@ namespace vr
         class GaussianBlurDenoiser : public DenoiserInterface
         {
           public:
-            GaussianBlurDenoiser(vr::VulrayDevice* device, uint32_t width, uint32_t height);
+            GaussianBlurDenoiser(vr::VulrayDevice* device, const DenoiserSettings& settings);
             ~GaussianBlurDenoiser() override;
 
             GaussianBlurDenoiser() = delete;
             GaussianBlurDenoiser(const GaussianBlurDenoiser&) = delete;
-
-            // Override the base class functions
-
-            void Initialize(vk::ImageUsageFlags inputUsage = (vk::ImageUsageFlags)0,
-                            vk::ImageUsageFlags outputUsage = (vk::ImageUsageFlags)0) override;
 
             std::vector<Resource> GetRequiredResources() override;
 
             void Denoise(vk::CommandBuffer cmdBuffer) override;
 
           private:
+            void InitializeResources() override;
+
             std::vector<DescriptorItem> mDescriptorItems = {};
             vk::DescriptorSetLayout mDescriptorSetLayout = nullptr;
             DescriptorBuffer mDescriptorBuffer = {};
@@ -39,7 +36,7 @@ namespace vr
 
           public:
             /// @brief The settings for the gaussian blur
-            struct Settings
+            struct Parameters
             {
                 /// @brief The radius of the gaussian blur
                 uint32_t Radius = 3;
@@ -54,7 +51,7 @@ namespace vr
             {
                 uint32_t Width;
                 uint32_t Height;
-                Settings DenoiserSettings;
+                Parameters Params;
             };
         };
     } // namespace Denoise

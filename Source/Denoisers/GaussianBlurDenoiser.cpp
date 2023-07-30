@@ -7,10 +7,12 @@ namespace vr
 {
     namespace Denoise
     {
-        GaussianBlurDenoiser::GaussianBlurDenoiser(vr::VulrayDevice* device, uint32_t width, uint32_t height)
-            : DenoiserInterface(device, width, height)
+        GaussianBlurDenoiser::GaussianBlurDenoiser(vr::VulrayDevice* device, const DenoiserSettings& settings)
+            : DenoiserInterface(device, settings)
         {
-            mSettings = new Settings();
+            mDenoiserParams = new Parameters();
+
+            InitializeResources();
         }
 
         GaussianBlurDenoiser::~GaussianBlurDenoiser()
@@ -25,14 +27,14 @@ namespace vr
 
             mDevice->GetDevice().destroyShaderModule(mShaderModule);
 
-            delete (Settings*)mSettings;
+            delete (Parameters*)mDenoiserParams;
         }
 
-        void GaussianBlurDenoiser::Initialize(vk::ImageUsageFlags inputUsage, vk::ImageUsageFlags outputUsage)
+        void GaussianBlurDenoiser::InitializeResources()
         {
             // Create the resources
             auto resources = GetRequiredResources();
-            DenoiserInterface::CreateResources(resources, inputUsage, outputUsage);
+            DenoiserInterface::CreateResources(resources, mSettings.InputUsage, mSettings.OutputUsage);
 
             mDescriptorItems = {
                 // Input image
@@ -110,16 +112,16 @@ namespace vr
             mDevice->BindDescriptorSet(mPipelineLayout, 0, 0, 0, cmdBuffer, vk::PipelineBindPoint::eCompute);
 
             PushConstantData pushData;
-            pushData.DenoiserSettings.Radius = ((Settings*)mSettings)->Radius;
-            pushData.DenoiserSettings.Sigma = ((Settings*)mSettings)->Sigma;
-            pushData.Width = mWidth;
-            pushData.Height = mHeight;
+            pushData.Params.Radius = ((Parameters*)mDenoiserParams)->Radius;
+            pushData.Params.Sigma = ((Parameters*)mDenoiserParams)->Sigma;
+            pushData.Width = mSettings.Width;
+            pushData.Height = mSettings.Height;
 
             // Push constants
             cmdBuffer.pushConstants(mPipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(PushConstantData),
                                     &pushData);
 
-            cmdBuffer.dispatch(mWidth / 16, mHeight / 16, 1);
+            cmdBuffer.dispatch(mSettings.Width / 16, mSettings.Height / 16, 1);
         }
     } // namespace Denoise
 } // namespace vr

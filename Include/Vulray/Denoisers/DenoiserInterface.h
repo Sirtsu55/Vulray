@@ -9,12 +9,14 @@ namespace vr
     {
         enum class ResourceType : uint32_t
         {
-            // Inputs have first bit set to 1
-            // Outputs have second bit set to 1
+            Input = 0b01,
+            Output = 0b10,
+            Internal = 0b11,
 
-            InputGeneral = 0b00000001, // General input, so denoiser can be used in any context
+            InputGeneral = Input | 0b100,
 
-            OutputFinal = 0b00000010, // Output  image
+            OutputFinal = Output | 0b100,
+
         };
 
         struct Resource
@@ -24,28 +26,25 @@ namespace vr
             AllocatedImage AllocImage;
             AccessibleImage AccessImage;
 
-            // Getters
-            ResourceType GetType() const { return Type; }
-            vk::Format GetFormat() const { return Format; }
-
-            // Setters
-            void AddUsage(vk::ImageUsageFlagBits usage) { Usage |= usage; }
-
-          private:
             vk::ImageUsageFlags Usage;
             ResourceType Type;
             vk::Format Format;
+        };
 
-            // Allow the denoisers to access the private members
-            friend class DenoiserInterface;
-            friend class GaussianBlurDenoiser;
+        struct DenoiserSettings
+        {
+            uint32_t Width;
+            uint32_t Height;
+
+            vk::ImageUsageFlags InputUsage;
+            vk::ImageUsageFlags OutputUsage;
         };
 
         class DenoiserInterface
         {
           public:
-            DenoiserInterface(vr::VulrayDevice* device, uint32_t width, uint32_t height)
-                : mDevice(device), mWidth(width), mHeight(height)
+            DenoiserInterface(vr::VulrayDevice* device, const DenoiserSettings& settings)
+                : mDevice(device), mSettings(settings)
             {
             }
 
@@ -54,13 +53,6 @@ namespace vr
             // Delete unwanted constructors
             DenoiserInterface() = delete;
             DenoiserInterface(const DenoiserInterface&) = delete;
-
-            /// @brief Initialize the denoiser
-            /// @param inputUsage The additional image usage flags for the input image
-            /// @param outputUsage The additional image usage flags for the output image
-            /// @note The internal usage flags will be added automatically
-            virtual void Initialize(vk::ImageUsageFlags inputUsage = (vk::ImageUsageFlags)0,
-                                    vk::ImageUsageFlags outputUsage = (vk::ImageUsageFlags)0) {};
 
             // TODO: Let the user allocate the resources and pass them to the denoiser
 
@@ -83,34 +75,38 @@ namespace vr
             /// function uses push constants for the settings
             virtual void Denoise(vk::CommandBuffer cmdBuffer) {};
 
-            /// @brief Get the settings struct
-            /// @tparam T The type of the settings struct -> DenoiserX::Settings
-            /// @return The settings struct
+            /// @brief Get the Parameters struct
+            /// @tparam T The type of the settings struct -> DenoiserX::Parameters
+            /// @return The Parameters struct
             /// @warning If a settings struct from another denoiser is requested, it can cause in segmentation faults,
             /// because the memory layout is different
-            template <typename T> T GetDenoiserSettings() const { return *(T*)mSettings; }
+            template <typename T> T GetDenoiserParams() const { return *(T*)mDenoiserParams; }
 
-            /// @brief Set the settings struct
-            /// @tparam T The type of the settings struct -> DenoiserX::Settings
-            /// @param settings The settings struct
-            /// @warning If a settings struct from another denoiser is set, it can cause in segmentation faults, because
-            /// the memory layout is different
-            template <typename T> void SetDenoiserSettings(const T& settings) { *(T*)mSettings = settings; }
+            /// @brief Set the Parameters struct
+            /// @tparam T The type of the Parameters struct -> DenoiserX::Parameters
+            /// @param params The Parameters struct
+            /// @warning If a Parameters struct from another denoiser is set, it can cause in segmentation faults,
+            /// because the memory layout is different
+            template <typename T> void SetDenoiserParams(const T& params) { *(T*)mDenoiserParams = params; }
+
+          private:
+            /// @brief Initialize the resources
+            /// Helper function to create the resources that is overridden by the derived class
+            virtual void InitializeResources() {}
 
           protected:
             // Reference to the vulray device that was used to create the denoiser
             // This is needed to destroy the resources
             vr::VulrayDevice* mDevice;
 
-            uint32_t mWidth;
-            uint32_t mHeight;
+            DenoiserSettings mSettings;
 
             std::vector<Resource> mInputResources;
             std::vector<Resource> mInternalResources;
             std::vector<Resource> mOutputResources;
 
             // pointer to the settings struct, allocated by a derived class
-            void* mSettings = nullptr;
+            void* mDenoiserParams = nullptr;
 
             void CreateResources(std::vector<Resource>& resources, vk::ImageUsageFlags inputUsage,
                                  vk::ImageUsageFlags outputUsage);

@@ -657,9 +657,9 @@ namespace vr
         /// if T is not a denoiser
         template <typename T,
                   typename std::enable_if<std::is_base_of<Denoise::DenoiserInterface, T>::value, int>::type = 0>
-        vr::Denoiser CreateDenoiser(int width, int height)
+        vr::Denoiser CreateDenoiser(const Denoise::DenoiserSettings& settings)
         {
-            return std::make_unique<T>(this, width, height);
+            return std::make_unique<T>(this, settings);
         }
 
 #endif

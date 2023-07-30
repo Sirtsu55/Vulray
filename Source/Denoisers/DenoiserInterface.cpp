@@ -31,7 +31,7 @@ namespace vr
             auto imageInfo = vk::ImageCreateInfo()
                                  .setImageType(vk::ImageType::e2D)
                                  .setFormat(vk::Format::eUndefined) // Format depends on the resource type
-                                 .setExtent(vk::Extent3D(mWidth, mHeight, 1))
+                                 .setExtent(vk::Extent3D(mSettings.Width, mSettings.Height, 1))
                                  .setMipLevels(1)
                                  .setArrayLayers(1)
                                  .setSamples(vk::SampleCountFlagBits::e1)

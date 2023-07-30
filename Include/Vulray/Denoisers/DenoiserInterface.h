@@ -13,8 +13,10 @@ namespace vr
             Output = 0b10,
             Internal = 0b11,
 
+            /// @brief Input resource that can be anything
             InputGeneral = Input | 0b100,
 
+            /// @brief Output resource that is the final image
             OutputFinal = Output | 0b100,
 
         };
@@ -88,11 +90,6 @@ namespace vr
             /// @warning If a Parameters struct from another denoiser is set, it can cause in segmentation faults,
             /// because the memory layout is different
             template <typename T> void SetDenoiserParams(const T& params) { *(T*)mDenoiserParams = params; }
-
-          private:
-            /// @brief Initialize the resources
-            /// Helper function to create the resources that is overridden by the derived class
-            virtual void InitializeResources() {}
 
           protected:
             // Reference to the vulray device that was used to create the denoiser

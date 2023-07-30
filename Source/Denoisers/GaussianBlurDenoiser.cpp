@@ -12,7 +12,7 @@ namespace vr
         {
             mDenoiserParams = new Parameters();
 
-            InitializeResources();
+            Init();
         }
 
         GaussianBlurDenoiser::~GaussianBlurDenoiser()
@@ -30,7 +30,7 @@ namespace vr
             delete (Parameters*)mDenoiserParams;
         }
 
-        void GaussianBlurDenoiser::InitializeResources()
+        void GaussianBlurDenoiser::Init()
         {
             // Create the resources
             auto resources = GetRequiredResources();
@@ -104,7 +104,7 @@ namespace vr
             return resources;
         }
 
-        void Denoise::GaussianBlurDenoiser::Denoise(vk::CommandBuffer cmdBuffer)
+        void GaussianBlurDenoiser::Denoise(vk::CommandBuffer cmdBuffer)
         {
             // Bind the pipeline
             cmdBuffer.bindPipeline(vk::PipelineBindPoint::eCompute, mPipeline);

@@ -692,6 +692,4 @@ namespace vr
         VmaPool mCurrentPool = nullptr;
     };
 
-    vk::AccelerationStructureGeometryDataKHR ConvertToVulkanGeometry(const GeometryData& geom);
-
 } // namespace vr

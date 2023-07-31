@@ -165,4 +165,6 @@ namespace vr
         AllocatedBuffer Buffer = {};
     };
 
+    vk::AccelerationStructureGeometryDataKHR ConvertToVulkanGeometry(const GeometryData& geom);
+
 } // namespace vr

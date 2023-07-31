@@ -1,4 +1,5 @@
 #include "Vulray/AccelStruct.h"
+
 #include "Vulray/VulrayDevice.h"
 
 namespace vr
@@ -549,6 +550,7 @@ namespace vr
     {
         mDevice.destroyAccelerationStructureKHR(accel, nullptr, mDynLoader);
     }
+
     vk::AccelerationStructureGeometryDataKHR ConvertToVulkanGeometry(const GeometryData& geom)
     {
         vk::AccelerationStructureGeometryDataKHR outGeom = {};

@@ -5,20 +5,11 @@
 
 namespace vr
 {
-    VulrayDevice::VulrayDevice(vk::Instance inst, vk::Device dev, vk::PhysicalDevice physDev)
-        : mInstance(inst), mDevice(dev), mPhysicalDevice(physDev)
+    VulrayDevice::VulrayDevice(vk::Instance inst, vk::Device dev, vk::PhysicalDevice physDev, VmaAllocator allocator)
+        : mInstance(inst), mDevice(dev), mPhysicalDevice(physDev), mVMAllocator(allocator)
     {
 
         mDynLoader.init(inst, vkGetInstanceProcAddr, dev, vkGetDeviceProcAddr);
-
-        // Create allocator for accelstructs
-        VmaAllocatorCreateInfo allocatorInfo = {};
-        allocatorInfo.physicalDevice = physDev;
-        allocatorInfo.device = dev;
-        allocatorInfo.instance = inst;
-        allocatorInfo.flags = VmaAllocatorCreateFlagBits::VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT;
-
-        vmaCreateAllocator(&allocatorInfo, &mVMAllocator);
 
         // Get ray tracing and accel properties
         auto deviceProperties = vk::PhysicalDeviceProperties2KHR();
@@ -30,11 +21,29 @@ namespace vr
         mPhysicalDevice.getProperties2KHR(&deviceProperties, mDynLoader);
 
         mDeviceProperties = mPhysicalDevice.getProperties();
+
+        // If the supplied allocator isn't null then return, because we don't need to create a new one
+        if (mVMAllocator != nullptr)
+        {
+            mUserSuppliedAllocator = true;
+            return;
+        }
+
+        // Create allocator for accelstructs
+        VmaAllocatorCreateInfo allocatorInfo = {};
+        allocatorInfo.physicalDevice = physDev;
+        allocatorInfo.device = dev;
+        allocatorInfo.instance = inst;
+        allocatorInfo.flags = VmaAllocatorCreateFlagBits::VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT;
+
+        vmaCreateAllocator(&allocatorInfo, &mVMAllocator);
+        mUserSuppliedAllocator = false;
     }
 
     VulrayDevice::~VulrayDevice()
     {
-        vmaDestroyAllocator(mVMAllocator);
+        if (!mUserSuppliedAllocator)
+            vmaDestroyAllocator(mVMAllocator);
     }
 
     vk::CommandBuffer VulrayDevice::CreateCommandBuffer(vk::CommandPool pool, vk::CommandBufferLevel level)

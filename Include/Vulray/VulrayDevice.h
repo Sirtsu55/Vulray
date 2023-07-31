@@ -28,7 +28,10 @@ namespace vr
         /// @param inst Handle to the Vulkan instance
         /// @param dev Handle to the Vulkan device
         /// @param physDev Handle to the Vulkan physical device
-        VulrayDevice(vk::Instance inst, vk::Device dev, vk::PhysicalDevice physDev);
+        /// @param allocator The VMA allocator that will be used to allocate memory, if it is nullptr then a new
+        /// allocator for VMA will be created, and destroyed when the device is destroyed. If an allocator is passed in
+        /// then it's not destroyed when the device is destroyed.
+        VulrayDevice(vk::Instance inst, vk::Device dev, vk::PhysicalDevice physDev, VmaAllocator allocator = nullptr);
         ~VulrayDevice();
 
         // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -281,6 +284,14 @@ namespace vr
         // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
         // @@@@@@@@@@@@@@@@@@@@@@ Allocation Functions @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
         // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+        /// @brief Returns the VMA allocator that is used to allocate the resources
+        VmaAllocator GetAllocator() const { return mVMAllocator; }
+
+        /// @brief Sets the current pool that will be used to allocate resources
+        /// @param pool The pool that will be used to allocate resources, when it's nullptr, the default pool will be
+        /// used
+        void SetCurrentPool(VmaPool pool) { mCurrentPool = pool; }
 
         /// @brief Creates an Image
         /// @param imgInfo The information that will be used to create the image
@@ -677,6 +688,8 @@ namespace vr
         vk::PhysicalDeviceDescriptorBufferPropertiesEXT mDescriptorBufferProperties;
 
         VmaAllocator mVMAllocator;
+        bool mUserSuppliedAllocator = false;
+        VmaPool mCurrentPool = nullptr;
     };
 
     vk::AccelerationStructureGeometryDataKHR ConvertToVulkanGeometry(const GeometryData& geom);

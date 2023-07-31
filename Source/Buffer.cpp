@@ -1,4 +1,5 @@
 #include "Vulray/Buffer.h"
+
 #include "Vulray/VulrayDevice.h"
 
 namespace vr
@@ -6,10 +7,11 @@ namespace vr
 
     AllocatedImage VulrayDevice::CreateImage(const vk::ImageCreateInfo& imgInfo, VmaAllocationCreateFlags flags)
     {
-        AllocatedImage outImage;
+        AllocatedImage outImage = {};
         VmaAllocationCreateInfo allocInf = {};
         allocInf.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
         allocInf.flags = flags;
+        allocInf.pool = mCurrentPool;
 
         VmaAllocationInfo allocationInfo = {};
 
@@ -34,6 +36,7 @@ namespace vr
         VmaAllocationCreateInfo allocInf = {};
         allocInf.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
         allocInf.flags = flags;
+        allocInf.pool = mCurrentPool;
 
         vk::BufferCreateInfo bufInfo = {};
         bufInfo.setSize(size);

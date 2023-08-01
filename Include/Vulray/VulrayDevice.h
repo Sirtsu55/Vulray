@@ -75,21 +75,6 @@ namespace vr
         // @@@@@@@@@@@@@@@@@@@@@@@ Command Buffer Functions @@@@@@@@@@@@@@@@@@@@@@@@@@@
         // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-        /// @brief Create a Command Buffer
-        /// @param pool The command pool that will be used to allocate the command buffer
-        /// @param level The level of the command buffer
-        /// @return The created command buffer
-        [[nodiscard]] vk::CommandBuffer CreateCommandBuffer(
-            vk::CommandPool pool, vk::CommandBufferLevel level = vk::CommandBufferLevel::ePrimary);
-
-        /// @brief Create multiple command buffers
-        /// @param pool The command pool that will be used to allocate the command buffers
-        /// @param count The number of command buffers to create
-        /// @param level The level of the command buffers
-        /// @return The created command buffers
-        [[nodiscard]] std::vector<vk::CommandBuffer> CreateCommandBuffers(
-            vk::CommandPool pool, uint32_t count, vk::CommandBufferLevel level = vk::CommandBufferLevel::ePrimary);
-
         /// @brief Transitions the image layout
         /// @param image The image that will be transitioned
         /// @param oldLayout The old layout of the image
@@ -288,30 +273,29 @@ namespace vr
         /// @brief Returns the VMA allocator that is used to allocate the resources
         VmaAllocator GetAllocator() const { return mVMAllocator; }
 
-        /// @brief Sets the current pool that will be used to allocate resources
-        /// @param pool The pool that will be used to allocate resources, when it's nullptr, the default pool will be
-        /// used
-        void SetCurrentPool(VmaPool pool) { mCurrentPool = pool; }
-
         /// @brief Creates an Image
         /// @param imgInfo The information that will be used to create the image
         /// @param flags The VMA flags that will be used to allocate the image
         /// @return The created image
         /// @note Image views are not created in this function and must be created manually
-        [[nodiscard]] AllocatedImage CreateImage(const vk::ImageCreateInfo& imgInfo, VmaAllocationCreateFlags flags);
+        [[nodiscard]] AllocatedImage CreateImage(const vk::ImageCreateInfo& imgInfo, VmaAllocationCreateFlags flags,
+                                                 VmaPool pool = nullptr);
 
         /// @brief Creates a buffer
         /// @param size The size of the buffer
-        /// @param flags The VMA flags that will be used to allocate the buffer
         /// @param bufferUsage The usage of the buffer
+        /// @param flags The VMA flags that will be used to allocate the buffer
         /// @param alignment The alignment of the buffer, default is no alignment
+        /// @param pool The VMA pool that will be used to allocate the buffer, if nullptr, the default pool will be
+        /// used.
         /// @return The created buffer
-        /// @note All the buffers are created with the eShaderDeviceAddressKHR flag, so no need to add it to the buffer
-        /// usage. Furthermore, VmaAllocationCreateInfo::usage is VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE, so the memory
-        /// will be allocated preferentially on the device, do not confuse this with VmaAllocationCreateInfo::flags
-        /// which is asked to be passed as a parameter.
-        [[nodiscard]] AllocatedBuffer CreateBuffer(vk::DeviceSize size, VmaAllocationCreateFlags flags,
-                                                   vk::BufferUsageFlags bufferUsage, uint32_t alignment = 0);
+        /// @note 1. All the buffers are created with the eShaderDeviceAddressKHR flag.
+        /// 2. By default VmaAllocationCreateInfo::usage is VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE, so the memory will be
+        /// allocated preferentially on the device. This can be overriden by specifying a VmaPool from where the memory
+        /// will be allocated.
+        [[nodiscard]] AllocatedBuffer CreateBuffer(vk::DeviceSize size, vk::BufferUsageFlags bufferUsage,
+                                                   VmaAllocationCreateFlags flags = 0, uint32_t alignment = 0,
+                                                   VmaPool pool = nullptr);
 
         /// @brief Creates a buffer for storing the instances
         /// @param instanceCount The number of instances that will be stored in the buffer (not byte size)
@@ -648,14 +632,14 @@ namespace vr
         void DestroySBTBuffer(SBTBuffer& buffer);
 
         /// @brief Dispatches the rays
-        /// @param cmdBuf The command buffer that will be used to record the dispatch
         /// @param rtPipeline The ray tracing pipeline that will be used to dispatch the rays
         /// @param buffer The SBT buffer that contains the shader records
         /// @param width The width of the image that will be used to dispatch the rays
         /// @param height The height of the image that will be used to dispatch the rays
         /// @param depth The depth of the image that will be used to dispatch the rays, default is 1
-        void DispatchRays(vk::CommandBuffer cmdBuf, const vk::Pipeline rtPipeline, const SBTBuffer& buffer,
-                          uint32_t width, uint32_t height, uint32_t depth = 1);
+        /// @param cmdBuf The command buffer that will be used to record the dispatch
+        void DispatchRays(const vk::Pipeline rtPipeline, const SBTBuffer& buffer, uint32_t width, uint32_t height,
+                          uint32_t depth, vk::CommandBuffer cmdBuf);
 
         // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
         // @@@@@@@@@@@@@@@@@@@@@@@@@@@ Denoiser Functions @@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -689,7 +673,6 @@ namespace vr
 
         VmaAllocator mVMAllocator;
         bool mUserSuppliedAllocator = false;
-        VmaPool mCurrentPool = nullptr;
     };
 
 } // namespace vr

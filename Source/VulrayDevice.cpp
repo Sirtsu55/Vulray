@@ -45,18 +45,4 @@ namespace vr
         if (!mUserSuppliedAllocator)
             vmaDestroyAllocator(mVMAllocator);
     }
-
-    vk::CommandBuffer VulrayDevice::CreateCommandBuffer(vk::CommandPool pool, vk::CommandBufferLevel level)
-    {
-        auto cmdBuf = vk::CommandBuffer();
-        auto allocInfo = vk::CommandBufferAllocateInfo(pool, level, 1);
-        auto _ = mDevice.allocateCommandBuffers(&allocInfo, &cmdBuf);
-        return cmdBuf;
-    }
-
-    std::vector<vk::CommandBuffer> VulrayDevice::CreateCommandBuffers(vk::CommandPool pool, uint32_t count,
-                                                                      vk::CommandBufferLevel level)
-    {
-        return mDevice.allocateCommandBuffers(vk::CommandBufferAllocateInfo(pool, level, count));
-    }
 } // namespace vr

@@ -1,4 +1,5 @@
 #include "Vulray/SBT.h"
+
 #include "Vulray/VulrayDevice.h"
 
 namespace vr
@@ -111,27 +112,25 @@ namespace vr
 
         // Create all buffers for the SBT
         if (sbt.RayGenIndices.size() || sbt.ReserveRayGenGroups)
-            outSBT.RayGenBuffer = CreateBuffer(rgenSize * (rgenCount + sbt.ReserveRayGenGroups),
-                                               VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
-                                               vk::BufferUsageFlagBits::eShaderDeviceAddressKHR |
-                                                   vk::BufferUsageFlagBits::eShaderBindingTableKHR,
-                                               mRayTracingProperties.shaderGroupBaseAlignment);
+            outSBT.RayGenBuffer = CreateBuffer(
+                rgenSize * (rgenCount + sbt.ReserveRayGenGroups),
+                vk::BufferUsageFlagBits::eShaderDeviceAddressKHR | vk::BufferUsageFlagBits::eShaderBindingTableKHR,
+                VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT, mRayTracingProperties.shaderGroupBaseAlignment);
         if (sbt.MissIndices.size() || sbt.ReserveMissGroups)
             outSBT.MissBuffer = CreateBuffer(
-                missSize * (missCount + sbt.ReserveMissGroups), VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
+                missSize * (missCount + sbt.ReserveMissGroups),
                 vk::BufferUsageFlagBits::eShaderDeviceAddressKHR | vk::BufferUsageFlagBits::eShaderBindingTableKHR,
-                mRayTracingProperties.shaderGroupBaseAlignment);
+                VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT, mRayTracingProperties.shaderGroupBaseAlignment);
         if (sbt.HitGroupIndices.size() || sbt.ReserveHitGroups)
             outSBT.HitGroupBuffer = CreateBuffer(
-                hitSize * (hitCount + sbt.ReserveHitGroups), VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
+                hitSize * (hitCount + sbt.ReserveHitGroups),
                 vk::BufferUsageFlagBits::eShaderDeviceAddressKHR | vk::BufferUsageFlagBits::eShaderBindingTableKHR,
-                mRayTracingProperties.shaderGroupBaseAlignment);
+                VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT, mRayTracingProperties.shaderGroupBaseAlignment);
         if (sbt.CallableIndices.size() || sbt.ReserveCallableGroups)
-            outSBT.CallableBuffer = CreateBuffer(callSize * (callCount + sbt.ReserveCallableGroups),
-                                                 VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
-                                                 vk::BufferUsageFlagBits::eShaderDeviceAddressKHR |
-                                                     vk::BufferUsageFlagBits::eShaderBindingTableKHR,
-                                                 mRayTracingProperties.shaderGroupBaseAlignment);
+            outSBT.CallableBuffer = CreateBuffer(
+                callSize * (callCount + sbt.ReserveCallableGroups),
+                vk::BufferUsageFlagBits::eShaderDeviceAddressKHR | vk::BufferUsageFlagBits::eShaderBindingTableKHR,
+                VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT, mRayTracingProperties.shaderGroupBaseAlignment);
 
         // For filling the stride and size of the regions, we don't want to set stride when there is no shader of that
         // type. We didn't do this earlier because we needed to know the size of the shader group handles to reserve

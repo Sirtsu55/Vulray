@@ -5,13 +5,14 @@
 namespace vr
 {
 
-    AllocatedImage VulrayDevice::CreateImage(const vk::ImageCreateInfo& imgInfo, VmaAllocationCreateFlags flags)
+    AllocatedImage VulrayDevice::CreateImage(const vk::ImageCreateInfo& imgInfo, VmaAllocationCreateFlags flags,
+                                             VmaPool pool)
     {
         AllocatedImage outImage = {};
         VmaAllocationCreateInfo allocInf = {};
         allocInf.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
         allocInf.flags = flags;
-        allocInf.pool = mCurrentPool;
+        allocInf.pool = pool;
 
         VmaAllocationInfo allocationInfo = {};
 
@@ -28,15 +29,15 @@ namespace vr
         return outImage;
     }
 
-    AllocatedBuffer VulrayDevice::CreateBuffer(vk::DeviceSize size, VmaAllocationCreateFlags flags,
-                                               vk::BufferUsageFlags bufferUsage, uint32_t alignment)
+    AllocatedBuffer VulrayDevice::CreateBuffer(vk::DeviceSize size, vk::BufferUsageFlags bufferUsage,
+                                               VmaAllocationCreateFlags flags, uint32_t alignment, VmaPool pool)
     {
         AllocatedBuffer outBuffer = {};
 
         VmaAllocationCreateInfo allocInf = {};
         allocInf.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
         allocInf.flags = flags;
-        allocInf.pool = mCurrentPool;
+        allocInf.pool = pool;
 
         vk::BufferCreateInfo bufInfo = {};
         bufInfo.setSize(size);
@@ -69,13 +70,13 @@ namespace vr
     AllocatedBuffer VulrayDevice::CreateInstanceBuffer(uint32_t instanceCount)
     {
         return CreateBuffer(instanceCount * sizeof(vk::AccelerationStructureInstanceKHR),
-                            VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
-                            vk::BufferUsageFlagBits::eAccelerationStructureBuildInputReadOnlyKHR);
+                            vk::BufferUsageFlagBits::eAccelerationStructureBuildInputReadOnlyKHR,
+                            VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
     }
 
     AllocatedBuffer VulrayDevice::CreateScratchBuffer(uint32_t size)
     {
-        return CreateBuffer(size, 0, vk::BufferUsageFlagBits::eStorageBuffer,
+        return CreateBuffer(size, vk::BufferUsageFlagBits::eStorageBuffer, 0,
                             mAccelProperties.minAccelerationStructureScratchOffsetAlignment);
     }
 
@@ -94,8 +95,9 @@ namespace vr
         size = AlignUp(size, mDescriptorBufferProperties.descriptorBufferOffsetAlignment);
 
         // create a buffer that is big enough to hold all the descriptor sets and with the proper alignment
-        outBuffer.Buffer = CreateBuffer(size * setCount, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
-                                        usageFlags, mDescriptorBufferProperties.descriptorBufferOffsetAlignment);
+        outBuffer.Buffer =
+            CreateBuffer(size * setCount, usageFlags, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
+                         mDescriptorBufferProperties.descriptorBufferOffsetAlignment);
 
         // fill the offsets to the items
         for (auto& item : items)

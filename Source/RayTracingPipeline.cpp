@@ -255,8 +255,8 @@ namespace vr
         shaderCollection.CollectionPipeline = res.value;
     }
 
-    void VulrayDevice::DispatchRays(vk::CommandBuffer cmdBuf, const vk::Pipeline rtPipeline, const SBTBuffer& buffer,
-                                    uint32_t width, uint32_t height, uint32_t depth)
+    void VulrayDevice::DispatchRays(const vk::Pipeline rtPipeline, const SBTBuffer& buffer, uint32_t width,
+                                    uint32_t height, uint32_t depth, vk::CommandBuffer cmdBuf)
     {
         // dispatch rays
         cmdBuf.bindPipeline(vk::PipelineBindPoint::eRayTracingKHR, rtPipeline);

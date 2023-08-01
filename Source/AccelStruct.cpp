@@ -59,8 +59,8 @@ namespace vr
 
         // Create the buffer for the acceleration structure
         outAccel.Buffer = CreateBuffer(outBuildInfo.BuildSizes.accelerationStructureSize,
-                                       0, // no flags for VMA
-                                       vk::BufferUsageFlagBits::eAccelerationStructureStorageKHR);
+                                       // no flags for VMA
+                                       vk::BufferUsageFlagBits::eAccelerationStructureStorageKHR, 0);
 
         // Create the acceleration structure
         auto createInfo = vk::AccelerationStructureCreateInfoKHR()
@@ -201,7 +201,7 @@ namespace vr
                 continue;
             // Create buffer
             AllocatedBuffer compactBuffer =
-                CreateBuffer(sizes[i], 0, vk::BufferUsageFlagBits::eAccelerationStructureStorageKHR);
+                CreateBuffer(sizes[i], vk::BufferUsageFlagBits::eAccelerationStructureStorageKHR, 0);
 
             // Create the compacted acceleration structure
             auto createInfo = vk::AccelerationStructureCreateInfoKHR()
@@ -240,7 +240,7 @@ namespace vr
                 continue;
             // Create buffer
             AllocatedBuffer compactBuffer =
-                CreateBuffer(sizes[i], 0, vk::BufferUsageFlagBits::eAccelerationStructureStorageKHR);
+                CreateBuffer(sizes[i], vk::BufferUsageFlagBits::eAccelerationStructureStorageKHR, 0);
 
             // Create the compacted acceleration structure
             auto createInfo = vk::AccelerationStructureCreateInfoKHR()
@@ -382,8 +382,7 @@ namespace vr
 
         // Create the buffer for the acceleration structure
         outAccel.Buffer = CreateBuffer(outBuildInfo.BuildSizes.accelerationStructureSize,
-                                       0, // no flags for VMA
-                                       vk::BufferUsageFlagBits::eAccelerationStructureStorageKHR);
+                                       vk::BufferUsageFlagBits::eAccelerationStructureStorageKHR, 0);
 
         // Create the acceleration structure
         auto createInfo = vk::AccelerationStructureCreateInfoKHR()

@@ -36,7 +36,7 @@ namespace vr
         VmaAllocationCreateInfo allocInf = {};
         allocInf.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
         allocInf.flags = flags;
-        allocInf.pool = mCurrentPool;
+        allocInf.pool = mCurrentPool; // this can be null, in which case the default pool is used
 
         vk::BufferCreateInfo bufInfo = {};
         bufInfo.setSize(size);
@@ -64,6 +64,13 @@ namespace vr
         outBuffer.DevAddress = mDevice.getBufferAddress(vk::BufferDeviceAddressInfo().setBuffer(outBuffer.Buffer));
         outBuffer.Size = size;
         return outBuffer;
+    }
+
+    AllocatedBuffer VulrayDevice::CreateBuffer(vk::DeviceSize size, vk::BufferUsageFlags bufferUsage,
+                                               uint32_t alignment)
+    {
+        assert(mCurrentPool != nullptr);
+        return CreateBuffer(size, 0, bufferUsage, alignment);
     }
 
     AllocatedBuffer VulrayDevice::CreateInstanceBuffer(uint32_t instanceCount)

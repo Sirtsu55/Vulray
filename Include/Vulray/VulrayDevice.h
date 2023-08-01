@@ -288,7 +288,7 @@ namespace vr
         /// @brief Returns the VMA allocator that is used to allocate the resources
         VmaAllocator GetAllocator() const { return mVMAllocator; }
 
-        /// @brief Sets the current pool that will be used to allocate resources
+        /// @brief Sets the current pool that will be used to allocate resources, set to nullptr to use the default pool
         /// @param pool The pool that will be used to allocate resources, when it's nullptr, the default pool will be
         /// used
         void SetCurrentPool(VmaPool pool) { mCurrentPool = pool; }
@@ -302,16 +302,30 @@ namespace vr
 
         /// @brief Creates a buffer
         /// @param size The size of the buffer
-        /// @param flags The VMA flags that will be used to allocate the buffer
+        /// @param flags The VMA flags that will be used to allocate the buffer, ignored if current pool is set
         /// @param bufferUsage The usage of the buffer
         /// @param alignment The alignment of the buffer, default is no alignment
         /// @return The created buffer
-        /// @note All the buffers are created with the eShaderDeviceAddressKHR flag, so no need to add it to the buffer
-        /// usage. Furthermore, VmaAllocationCreateInfo::usage is VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE, so the memory
-        /// will be allocated preferentially on the device, do not confuse this with VmaAllocationCreateInfo::flags
-        /// which is asked to be passed as a parameter.
+        /// @note 1. All the buffers are created with the eShaderDeviceAddressKHR flag.
+        ///       2. VmaAllocationCreateInfo::usage is by default VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE, so the memory
+        ///       will be allocated preferentially on the device. If you want another flag for this field, you should
+        ///       create a a custom pool and call SetCurrentPool(...) with the custom pool. This will override the VMA
+        ///       flags.
+        ///       3. If current pool is set (SetCurrentPool(...)), this function will use the allocation flags and
+        ///       the usage flags from the pool, so VmaAllocationCreateFlags is ignored in the function.
         [[nodiscard]] AllocatedBuffer CreateBuffer(vk::DeviceSize size, VmaAllocationCreateFlags flags,
                                                    vk::BufferUsageFlags bufferUsage, uint32_t alignment = 0);
+
+        /// @brief Creates a buffer from the current pool, helper function for CreateBuffer(...), so that you don't have
+        /// to pass the VmaAllocationCreateFlags that is ignored.
+        /// @param size The size of the buffer
+        /// @param bufferUsage The usage of the buffer
+        /// @param alignment The alignment of the buffer, default is no alignment
+        /// @return The created buffer
+        /// @warning It will assert if the current pool is nullptr, so only use this function when you have called
+        /// SetCurrentPool(...)
+        [[nodiscard]] AllocatedBuffer CreateBuffer(vk::DeviceSize size, vk::BufferUsageFlags bufferUsage,
+                                                   uint32_t alignment = 0);
 
         /// @brief Creates a buffer for storing the instances
         /// @param instanceCount The number of instances that will be stored in the buffer (not byte size)

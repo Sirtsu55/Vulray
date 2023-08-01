@@ -67,13 +67,6 @@ namespace vr
         return outBuffer;
     }
 
-    AllocatedBuffer VulrayDevice::CreateBuffer(vk::DeviceSize size, vk::BufferUsageFlags bufferUsage,
-                                               uint32_t alignment)
-    {
-        assert(mCurrentPool != nullptr);
-        return CreateBuffer(size, 0, bufferUsage, alignment);
-    }
-
     AllocatedBuffer VulrayDevice::CreateInstanceBuffer(uint32_t instanceCount)
     {
         return CreateBuffer(instanceCount * sizeof(vk::AccelerationStructureInstanceKHR),

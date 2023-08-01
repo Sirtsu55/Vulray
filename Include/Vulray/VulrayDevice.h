@@ -297,17 +297,6 @@ namespace vr
                                                    VmaAllocationCreateFlags flags = 0, uint32_t alignment = 0,
                                                    VmaPool pool = nullptr);
 
-        /// @brief Creates a buffer from the current pool, helper function for CreateBuffer(...), so that you don't have
-        /// to pass the VmaAllocationCreateFlags that is ignored.
-        /// @param size The size of the buffer
-        /// @param bufferUsage The usage of the buffer
-        /// @param alignment The alignment of the buffer, default is no alignment
-        /// @return The created buffer
-        /// @warning It will assert if the current pool is nullptr, so only use this function when you have called
-        /// SetCurrentPool(...)
-        [[nodiscard]] AllocatedBuffer CreateBuffer(vk::DeviceSize size, vk::BufferUsageFlags bufferUsage,
-                                                   uint32_t alignment = 0);
-
         /// @brief Creates a buffer for storing the instances
         /// @param instanceCount The number of instances that will be stored in the buffer (not byte size)
         /// @return The created buffer

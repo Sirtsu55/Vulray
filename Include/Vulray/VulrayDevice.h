@@ -35,6 +35,18 @@ namespace vr
         ~VulrayDevice();
 
         // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        // @@@@@@@@@@@@@@@@@@@@@@@@@@ Setter Functions @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+        // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+        /// @brief Set the VmaPool that will be used to allocate memory internally
+        /// @param pool The VmaPool that will be used to allocate memory internally, can be nullptr to use the default
+        /// @note When creating descriptor buffers / images / acceleleration structures, the pool will be used to
+        /// allocate the memory so that means the the pool MUST have been created to support these types of allocations.
+        /// The allocations end up anywhere physically: Device or Host depending on the pool.
+        /// @warning If the pool is not created with the correct flags / memory types, then the allocations will fail.
+        void SetVmaPool(VmaPool pool) { mCurrentPool = pool; }
+
+        // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
         // @@@@@@@@@@@@@@@@@@@@@@@@@@ Getter Functions @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
         // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
@@ -673,6 +685,8 @@ namespace vr
 
         VmaAllocator mVMAllocator;
         bool mUserSuppliedAllocator = false;
+
+        VmaPool mCurrentPool = nullptr;
     };
 
 } // namespace vr

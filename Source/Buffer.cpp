@@ -12,7 +12,7 @@ namespace vr
         VmaAllocationCreateInfo allocInf = {};
         allocInf.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
         allocInf.flags = flags;
-        allocInf.pool = pool;
+        allocInf.pool = pool == nullptr ? mCurrentPool : pool;
 
         VmaAllocationInfo allocationInfo = {};
 
@@ -37,7 +37,7 @@ namespace vr
         VmaAllocationCreateInfo allocInf = {};
         allocInf.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
         allocInf.flags = flags;
-        allocInf.pool = pool;
+        allocInf.pool = pool == nullptr ? mCurrentPool : pool;
 
         vk::BufferCreateInfo bufInfo = {};
         bufInfo.setSize(size);

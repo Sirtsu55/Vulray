@@ -38,7 +38,7 @@ namespace vr
 
         uint32_t GraphicsIndex = ~0U;
         uint32_t ComputeIndex = ~0U;
-        uint32_t TranferIndex = ~0U;
+        uint32_t TransferIndex = ~0U;
         uint32_t PresentIndex = ~0U;
     };
 

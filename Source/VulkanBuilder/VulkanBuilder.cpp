@@ -89,6 +89,11 @@ namespace vr
                                 .set_surface(surface)
                                 .require_present();
 
+        if (DedicatedCompute)
+            physSelector.require_dedicated_compute_queue();
+        if (DedicatedTransfer)
+            physSelector.require_dedicated_transfer_queue();
+
         // Enable needed features
         auto raytracingFeatures = vk::PhysicalDeviceRayTracingPipelineFeaturesKHR().setRayTracingPipeline(true);
 

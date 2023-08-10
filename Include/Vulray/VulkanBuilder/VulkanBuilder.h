@@ -64,6 +64,10 @@ namespace vr
         // Enables validation layers
         bool EnableDebug = false;
 
+        // Bools for dedicated queues
+        bool DedicatedCompute = false;
+        bool DedicatedTransfer = false;
+
         VkPhysicalDeviceFeatures PhysicalDeviceFeatures10 = {};
         VkPhysicalDeviceVulkan11Features PhysicalDeviceFeatures11 = {};
         VkPhysicalDeviceVulkan12Features PhysicalDeviceFeatures12 = {};

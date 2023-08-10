@@ -33,7 +33,7 @@ namespace vr
     {
         vk::Queue GraphicsQueue = nullptr;
         vk::Queue ComputeQueue = nullptr;
-        vk::Queue TranferQueue = nullptr;
+        vk::Queue TransferQueue = nullptr;
         vk::Queue PresentQueue = nullptr;
 
         uint32_t GraphicsIndex = ~0U;

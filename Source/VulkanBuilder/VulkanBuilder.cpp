@@ -89,11 +89,6 @@ namespace vr
                                 .set_surface(surface)
                                 .require_present();
 
-        if (DedicatedCompute)
-            physSelector.require_dedicated_compute_queue();
-        if (DedicatedTransfer)
-            physSelector.require_dedicated_transfer_queue();
-
         // Enable needed features
         auto raytracingFeatures = vk::PhysicalDeviceRayTracingPipelineFeaturesKHR().setRayTracingPipeline(true);
 
@@ -169,42 +164,78 @@ namespace vr
     {
         vkb::Device& Device = reinterpret_cast<_BuilderVKBStructs*>(_StructData.get())->Device;
 
-        auto gQ = Device.get_queue(vkb::QueueType::graphics);
-        auto cQ = Device.get_queue(vkb::QueueType::compute);
-        auto tQ = Device.get_queue(vkb::QueueType::transfer);
-        auto pQ = Device.get_queue(vkb::QueueType::present);
+        auto vkDevice = static_cast<vk::Device>(Device.device);
 
-        auto gI = Device.get_queue_index(vkb::QueueType::graphics);
-        auto cI = Device.get_queue_index(vkb::QueueType::compute);
-        auto tI = Device.get_queue_index(vkb::QueueType::transfer);
-        auto pI = Device.get_queue_index(vkb::QueueType::present);
+        CommandQueues queues = {};
 
-        bool qValid = true;
+        auto getQueue = [&](uint32_t index) -> vk::Queue { return vkDevice.getQueue(index, 0); };
 
-        if (!gQ.has_value())
-        {
-            qValid = false;
-            VULRAY_FLOG_ERROR("Device doesn't have a Graphics Queue, Error: %s", gQ.error().message());
-        }
-        if (!cQ.has_value())
-        {
-            qValid = false;
-            VULRAY_FLOG_ERROR("Device doesn't have a Compute Queue, Error: %s", cQ.error().message());
-        }
-        if (!tQ.has_value())
-        {
-            qValid = false;
-            VULRAY_FLOG_ERROR("Device doesn't have a Transfer Queue, Error: %s", tQ.error().message());
-        }
-        if (!pQ.has_value())
-        {
-            qValid = false;
-            VULRAY_FLOG_ERROR("Device doesn't have a Present Queue, Error: %s", pQ.error().message());
-        }
-        if (!qValid)
-            throw std::runtime_error("Device doesn't have the required queues");
+        bool dedCompute = false;
+        bool dedTransfer = false;
 
-        return {gQ.value(), cQ.value(), tQ.value(), pQ.value(), gI.value(), cI.value(), tI.value(), pI.value()};
+        for (uint32_t i = 0; i < Device.queue_families.size(); i++)
+        {
+            auto& queue = Device.queue_families[i];
+            auto currentQueue = getQueue(i);
+
+            if (static_cast<vk::QueueFlags>(queue.queueFlags) & vk::QueueFlagBits::eGraphics)
+            {
+                queues.GraphicsQueue = currentQueue;
+                queues.GraphicsIndex = i;
+
+                queues.PresentQueue = currentQueue;
+                queues.PresentIndex = i;
+            }
+
+            if (static_cast<vk::QueueFlags>(queue.queueFlags) & vk::QueueFlagBits::eCompute)
+            {
+                if (dedCompute) // If we already have a dedicated compute queue, skip
+                    continue;
+
+                if (queues.GraphicsIndex == i)
+                    dedCompute = false;
+                else
+                    dedCompute = true;
+
+                queues.ComputeQueue = currentQueue;
+                queues.ComputeIndex = i;
+            }
+
+            if (static_cast<vk::QueueFlags>(queue.queueFlags) & vk::QueueFlagBits::eTransfer)
+            {
+                if (dedTransfer)
+                    continue;
+
+                if (queues.GraphicsIndex == i || queues.ComputeIndex == i)
+                    dedTransfer = false;
+                else
+                    dedTransfer = true;
+
+                queues.TransferQueue = currentQueue;
+                queues.TransferIndex = i;
+            }
+        }
+
+        if (!queues.GraphicsQueue)
+        {
+            VULRAY_FLOG_ERROR("No Graphics Queue Found");
+            throw std::runtime_error("No Graphics Queue Found");
+        }
+
+        if (DedicatedCompute && (queues.ComputeIndex == queues.GraphicsIndex))
+        {
+            VULRAY_FLOG_ERROR("No Compute Queue Found");
+            throw std::runtime_error("No Compute Queue Found");
+        }
+
+        if (DedicatedTransfer && (queues.TransferIndex == queues.GraphicsIndex) ||
+            (queues.TransferIndex == queues.ComputeIndex))
+        {
+            VULRAY_FLOG_ERROR("No Transfer Queue Found");
+            throw std::runtime_error("No Transfer Queue Found");
+        }
+
+        return queues;
     }
 
     // vr::Instance

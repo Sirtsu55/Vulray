@@ -222,14 +222,13 @@ namespace vr
             throw std::runtime_error("No Graphics Queue Found");
         }
 
-        if (DedicatedCompute && (queues.ComputeIndex == queues.GraphicsIndex))
+        if (DedicatedCompute && !dedCompute)
         {
             VULRAY_LOG_ERROR("No Compute Queue Found");
             throw std::runtime_error("No Compute Queue Found");
         }
 
-        if (DedicatedTransfer && (queues.TransferIndex == queues.GraphicsIndex) ||
-            (queues.TransferIndex == queues.ComputeIndex))
+        if (DedicatedTransfer && !dedTransfer)
         {
             VULRAY_LOG_ERROR("No Transfer Queue Found");
             throw std::runtime_error("No Transfer Queue Found");

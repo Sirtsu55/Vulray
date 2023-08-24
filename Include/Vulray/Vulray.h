@@ -31,19 +31,21 @@ namespace vr
 
     // Stackoverflow: https://stackoverflow.com/questions/2342162/stdstring-formatting-like-sprintf
     // Guard against multiple definitions
+
+    namespace detail
+    {
+        extern char _gStringFormatBuffer[1024];
+    }
 #ifndef _VULRAY_LOG_DEF
 #define _VULRAY_LOG_DEF
     template <typename... Args> constexpr std::string _string_format(const std::string& format, Args... args)
     {
-        int size_s = std::snprintf(nullptr, 0, format.c_str(), args...) + 1; // Extra space for '\0'
-        if (size_s <= 0)
-        {
+        int size = std::snprintf(nullptr, 0, format.c_str(), args...) + 1; // Extra space for '\0'
+        if (size <= 0)
             return "LOGGING ERROR";
-        }
-        auto size = static_cast<size_t>(size_s);
-        std::unique_ptr<char[]> buf(new char[size]);
-        std::snprintf(buf.get(), size, format.c_str(), args...);
-        return std::string(buf.get(), buf.get() + size - 1); // We don't want the '\0' inside
+        std::snprintf(detail::_gStringFormatBuffer, size, format.c_str(), args...);
+        return std::string(detail::_gStringFormatBuffer,
+                           detail::_gStringFormatBuffer + size - 1); // We don't want the '\0' inside
     }
 #endif
 } // namespace vr

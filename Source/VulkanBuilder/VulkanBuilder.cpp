@@ -42,6 +42,8 @@ namespace vr
     {
         auto instBuilder = vkb::InstanceBuilder().require_api_version(1, 3, 0);
 
+        for (auto v : ValidationFeatures)
+            instBuilder.add_validation_feature_enable(static_cast<VkValidationFeatureEnableEXT>(v));
         for (auto& ext : InstanceExtensions) instBuilder.enable_extension(ext);
         for (auto& layer : InstanceLayers) instBuilder.enable_layer(layer);
 

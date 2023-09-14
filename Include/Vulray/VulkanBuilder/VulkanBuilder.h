@@ -64,7 +64,11 @@ namespace vr
         // Enables validation layers
         bool EnableDebug = false;
 
+        // Enables raytracing extensions
+        std::vector<vk::ValidationFeatureEnableEXT> ValidationFeatures;
+
         // Bools for dedicated queues
+        // Device creation will fail if the device does not support the needed dedicated queues
         bool DedicatedCompute = false;
         bool DedicatedTransfer = false;
 

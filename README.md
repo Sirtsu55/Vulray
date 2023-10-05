@@ -25,7 +25,7 @@ It also has a RTIOW - like tutorial: https://sirtsu55.github.io/blog/RayTracing/
 ## Requirements
 - Vulkan SDK 1.3
 - Vulkan Ray Tracing capable device. [Check GPU for support](https://vulkan.gpuinfo.org/listdevicescoverage.php?extension=VK_KHR_ray_tracing_pipeline&platform=all)
-- Tested with CMake version 3.22 (can be older)
+- Tested with CMake version 3.25
 - A compiler with C++ 20 support 
 
 ## Integrating into projects

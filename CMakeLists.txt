@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.25)
 
 project("Vulray")
 
-find_package(Vulkan 1.3 REQUIRED)
+find_package(Vulkan 1.3 COMPONENTS dxc)
 
 
 # -------------- Options --------------

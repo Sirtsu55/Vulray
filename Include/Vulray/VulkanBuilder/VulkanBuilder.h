@@ -22,11 +22,11 @@ namespace vr
     struct SwapchainResources
     {
 
-        vk::SwapchainKHR SwapchainHandle = nullptr;
-        std::vector<vk::Image> SwapchainImages;
-        std::vector<vk::ImageView> SwapchainImageViews;
-        vk::Format SwapchainFormat;
-        vk::Extent2D SwapchainExtent;
+        vk::SwapchainKHR Handle = nullptr;
+        std::vector<vk::Image> Images;
+        std::vector<vk::ImageView> ImageViews;
+        vk::Format Format;
+        vk::Extent2D Extent;
     };
 
     struct CommandQueues

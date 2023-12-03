@@ -127,7 +127,7 @@ namespace vr
         physSelector.set_required_features_12(PhysicalDeviceFeatures12);
         physSelector.set_required_features_13(PhysicalDeviceFeatures13);
 
-        physSelector.set_minimum_version(1, 2);
+        physSelector.set_minimum_version(1, 3);
         auto physResult = physSelector.select();
         if (!physResult.has_value())
         {

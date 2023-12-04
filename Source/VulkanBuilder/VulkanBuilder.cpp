@@ -90,6 +90,8 @@ namespace vr
                                 .prefer_gpu_device_type(vkb::PreferredDeviceType::discrete)
                                 .set_surface(surface)
                                 .require_present();
+        if (!surface)
+            physSelector.defer_surface_initialization();
 
         // Enable needed features
         auto raytracingFeatures = vk::PhysicalDeviceRayTracingPipelineFeaturesKHR().setRayTracingPipeline(true);
@@ -131,7 +133,7 @@ namespace vr
         auto physResult = physSelector.select();
         if (!physResult.has_value())
         {
-            VULRAY_FLOG_ERROR("Physical Device Build failed, Error: %s", physResult.error().message());
+            VULRAY_FLOG_ERROR("Physical Device Build failed, Error: %s", physResult.error().message().c_str());
             throw std::runtime_error("Physical Device Build failed");
             return {};
         }
@@ -354,13 +356,13 @@ namespace vr
 
     void SwapchainBuilder::DestroySwapchain(vk::Device device, const SwapchainResources& res)
     {
-        device.destroySwapchainKHR(res.SwapchainHandle);
+        device.destroySwapchainKHR(res.Handle);
 
-        for (auto i : res.SwapchainImageViews) device.destroyImageView(i);
+        for (auto i : res.ImageViews) device.destroyImageView(i);
     }
     void SwapchainBuilder::DestroySwapchainResources(vk::Device device, const SwapchainResources& res)
     {
-        for (auto i : res.SwapchainImageViews) device.destroyImageView(i);
+        for (auto i : res.ImageViews) device.destroyImageView(i);
     }
 } // namespace vr
 

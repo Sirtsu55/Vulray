@@ -15,7 +15,7 @@ option(VULRAY_BUILD_VULKAN_BUILDER "Build bootsraps for easy Vulkan Initializati
 
 #add vk-bootstrap
 if(VULRAY_BUILD_VULKAN_BUILDER)
-	add_subdirectory("${PROJECT_SOURCE_DIR}/Vendor/vk-bootstrap/")
+	add_subdirectory("${PROJECT_SOURCE_DIR}/Deps/vk-bootstrap/")
 endif()
 
 # -------------- Source Files --------------
@@ -44,12 +44,12 @@ target_precompile_headers("Vulray" PRIVATE "${PROJECT_SOURCE_DIR}/Include/Vulray
 
 target_include_directories("Vulray" PUBLIC 
 	"${Vulkan_INCLUDE_DIRS}"
-	"${PROJECT_SOURCE_DIR}/Vendor/VulkanMemoryAllocator/include/"
+	"${PROJECT_SOURCE_DIR}/Deps/VulkanMemoryAllocator/include/"
 	"${PROJECT_SOURCE_DIR}/Include/"
 	)
 
 if(VULRAY_BUILD_VULKAN_BUILDER)
-	target_include_directories("Vulray" PRIVATE "${PROJECT_SOURCE_DIR}/Vendor/vk-bootstrap/include/")
+	target_include_directories("Vulray" PRIVATE "${PROJECT_SOURCE_DIR}/Deps/vk-bootstrap/include/")
 endif()
 if(VULRAY_BUILD_DENOISERS)
 	target_include_directories("Vulray" PRIVATE "${PROJECT_SOURCE_DIR}/Shaders/Bin/") # For denoiser shaders

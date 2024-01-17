@@ -1,8 +1,8 @@
-[submodule "Vendor/vk-bootstrap"]
-	path = Vendor/vk-bootstrap
+[submodule "vk-bootstrap"]
+	path = Deps/vk-bootstrap
 	url = https://github.com/charles-lunarg/vk-bootstrap.git
 	shallow = true
-[submodule "Vendor/VulkanMemoryAllocator"]
-	path = Vendor/VulkanMemoryAllocator
+[submodule "VulkanMemoryAllocator"]
+	path = Deps/VulkanMemoryAllocator
 	url = https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git
 	shallow = true

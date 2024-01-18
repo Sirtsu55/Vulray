@@ -38,7 +38,8 @@ namespace vr
     }
 #ifndef _VULRAY_LOG_DEF
 #define _VULRAY_LOG_DEF
-    template <typename... Args> constexpr std::string _string_format(const std::string& format, Args... args)
+    template <typename... Args>
+    constexpr std::string _string_format(const std::string& format, Args... args)
     {
         int size = std::snprintf(nullptr, 0, format.c_str(), args...) + 1; // Extra space for '\0'
         if (size <= 0)
@@ -63,7 +64,7 @@ namespace vr
 #define VULRAY_FLOG_INFO(fmt, ...)                                                                                     \
     if (vr::LogCallback == nullptr)                                                                                    \
     {                                                                                                                  \
-        VULRAY_LOG_STREAM << "\033[0m [Vulray]: " << vr::_string_format(fmt, __VA_ARGS__) << VULRAY_LOG_END << "\n";  \
+        VULRAY_LOG_STREAM << "\033[0m [Vulray]: " << vr::_string_format(fmt, __VA_ARGS__) << VULRAY_LOG_END << "\n";   \
     }                                                                                                                  \
     else                                                                                                               \
     {                                                                                                                  \

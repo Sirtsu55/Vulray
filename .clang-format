@@ -1,6 +1,6 @@
 ---
 BasedOnStyle: Microsoft
-AccessModifierOffset: -2
+AccessModifierOffset: -4
 AlignAfterOpenBracket: Align
 AlignArrayOfStructures: None
 AlignConsecutiveAssignments:
@@ -93,15 +93,6 @@ FixNamespaceComments: true
 IncludeBlocks: Regroup
 IncludeIsMainRegex: ()?$
 IncludeIsMainSourceRegex: ""
-IncludeCategories:
-  - Regex:           '<(.*)>'
-    Priority:        0
-    SortPriority:    0
-    CaseSensitive:   true
-  - Regex:           '(Vulray)/'
-    Priority:        1
-    SortPriority:    1
-    CaseSensitive:   true
 IndentAccessModifiers: false
 IndentCaseBlocks: false
 IndentCaseLabels: false
@@ -158,7 +149,7 @@ RequiresClausePosition: OwnLine
 RequiresExpressionIndentation: OuterScope
 SeparateDefinitionBlocks: Leave
 ShortNamespaceLines: 1
-SortIncludes: CaseSensitive
+SortIncludes: Never
 SortJavaStaticImport: Before
 SortUsingDeclarations: LexicographicNumeric
 SpaceAfterCStyleCast: false

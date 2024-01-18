@@ -128,7 +128,7 @@ namespace vr
         img.Allocation = nullptr;
     }
 
-    void VulrayDevice::UpdateBuffer(AllocatedBuffer alloc, void* data, const vk::DeviceSize size, uint32_t offset)
+    void VulrayDevice::UpdateBuffer(AllocatedBuffer alloc, void* data, const vk::DeviceSize size, vk::DeviceSize offset)
     {
         void* mappedData;
         vmaMapMemory(mVMAllocator, alloc.Allocation, &mappedData);

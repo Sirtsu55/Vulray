@@ -353,7 +353,7 @@ namespace vr
         /// inefficient to call this function many times
         /// @warning Segfault if pointer and size are not valid / out of bounds.
         /// VMA assertion if the buffer is not mappable.
-        void UpdateBuffer(AllocatedBuffer alloc, void* data, const vk::DeviceSize size, uint32_t offset = 0);
+        void UpdateBuffer(AllocatedBuffer alloc, void* data, const vk::DeviceSize size, vk::DeviceSize offset = 0);
 
         /// @brief Maps the buffer and returns the mapped data
         /// @param buffer The buffer that will be mapped

@@ -68,7 +68,7 @@ namespace vr
         }
 
         // Offset to the start of the requested group and apply the opaque handle size for the SBT
-        uint32_t offset = (groupIndex * addressRegion->stride) + mRayTracingProperties.shaderGroupHandleSize;
+        uint64_t offset = (groupIndex * addressRegion->stride) + mRayTracingProperties.shaderGroupHandleSize;
 
         // make sure the data size is not too large
         if (offset + dataSize > addressRegion->size)
@@ -92,10 +92,10 @@ namespace vr
     {
         SBTBuffer outSBT;
 
-        const uint32_t rgenCount = sbt.RayGenIndices.size();
-        const uint32_t missCount = sbt.MissIndices.size();
-        const uint32_t hitCount = sbt.HitGroupIndices.size();
-        const uint32_t callCount = sbt.CallableIndices.size();
+        const uint32_t rgenCount = static_cast<uint32_t>(sbt.RayGenIndices.size());
+        const uint32_t missCount = static_cast<uint32_t>(sbt.MissIndices.size());
+        const uint32_t hitCount = static_cast<uint32_t>(sbt.HitGroupIndices.size());
+        const uint32_t callCount = static_cast<uint32_t>(sbt.CallableIndices.size());
 
         const uint32_t groupsCount = rgenCount + missCount + hitCount + callCount;
 
@@ -217,10 +217,10 @@ namespace vr
         if (!CanSBTFitShaders(buffer, sbt))
             return false;
 
-        const uint32_t rgenCount = sbt.RayGenIndices.size();
-        const uint32_t missCount = sbt.MissIndices.size();
-        const uint32_t hitCount = sbt.HitGroupIndices.size();
-        const uint32_t callCount = sbt.CallableIndices.size();
+        const uint32_t rgenCount = static_cast<uint32_t>(sbt.RayGenIndices.size());
+        const uint32_t missCount = static_cast<uint32_t>(sbt.MissIndices.size());
+        const uint32_t hitCount = static_cast<uint32_t>(sbt.HitGroupIndices.size());
+        const uint32_t callCount = static_cast<uint32_t>(sbt.CallableIndices.size());
 
         const uint32_t groupsCount = rgenCount + missCount + hitCount + callCount;
 
@@ -364,10 +364,10 @@ namespace vr
             AlignUp(sbtInfo.CallableShaderRecordSize + mRayTracingProperties.shaderGroupHandleSize,
                     mRayTracingProperties.shaderGroupHandleAlignment);
 
-        const uint32_t rgenBytesNeeded = sbtInfo.RayGenIndices.size() * rgenSize;
-        const uint32_t missBytesNeeded = sbtInfo.MissIndices.size() * missSize;
-        const uint32_t hitBytesNeeded = sbtInfo.HitGroupIndices.size() * hitSize;
-        const uint32_t callBytesNeeded = sbtInfo.CallableIndices.size() * callSize;
+        const uint32_t rgenBytesNeeded = static_cast<uint32_t>(sbtInfo.RayGenIndices.size() * rgenSize);
+        const uint32_t missBytesNeeded = static_cast<uint32_t>(sbtInfo.MissIndices.size() * missSize);
+        const uint32_t hitBytesNeeded = static_cast<uint32_t>(sbtInfo.HitGroupIndices.size() * hitSize);
+        const uint32_t callBytesNeeded = static_cast<uint32_t>(sbtInfo.CallableIndices.size() * callSize);
 
         if (rgenBytesNeeded > buffer.RayGenBuffer.Size)
             return false;

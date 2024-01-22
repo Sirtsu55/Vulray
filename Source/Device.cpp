@@ -32,8 +32,9 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL DefaultDebugCallback(VkDebugUtilsMessageSe
 
 namespace vr
 {
-    Device::Device(DeviceRequirements& req)
+    VulkanContext CreateVulkanContext(DeviceRequirements& req)
     {
+        VulkanContext outCtx = {};
 
         auto appInfo = vk::ApplicationInfo()
                            .setApplicationVersion(VK_MAKE_VERSION(1, 0, 0))
@@ -93,10 +94,10 @@ namespace vr
                                       .setEnabledLayerCount(static_cast<uint32_t>(req.InstanceLayers.size()))
                                       .setPpEnabledLayerNames(req.InstanceLayers.data());
 
-        mInstance = vk::createInstance(instanceCreateInfo);
+        outCtx.Instance = vk::createInstance(instanceCreateInfo);
 
         // Load the dynamic loader
-        mDynLoader.init(mInstance, vkGetInstanceProcAddr);
+        outCtx.DynLoader.init(outCtx.Instance, vkGetInstanceProcAddr);
 
         // Load the debug messenger
         if (req.EnableDebugMessenger)
@@ -109,7 +110,7 @@ namespace vr
                                   .setPfnUserCallback(req.DebugCallback ? req.DebugCallback : DefaultDebugCallback)
                                   .setPUserData(req.DebugCallbackUserData);
 
-            mDebugMessenger = mInstance.createDebugUtilsMessengerEXT(createInfo, nullptr, mDynLoader);
+            outCtx.DebugMessenger = outCtx.Instance.createDebugUtilsMessengerEXT(createInfo, nullptr, outCtx.DynLoader);
         }
 
         // Add the raytracing extensions and descriptor buffer extension
@@ -136,7 +137,7 @@ namespace vr
         // Check if the physical devices support the needed extensions
         {
             // Get the physical devices
-            auto physicalDevices = mInstance.enumeratePhysicalDevices();
+            auto physicalDevices = outCtx.Instance.enumeratePhysicalDevices();
 
             for (auto& physicalDevice : physicalDevices)
             {
@@ -168,12 +169,12 @@ namespace vr
                     continue;
                 else
                 {
-                    mPhysicalDevice = physicalDevice;
+                    outCtx.PhysicalDevice = physicalDevice;
                     break;
                 }
             }
 
-            if (!mPhysicalDevice)
+            if (!outCtx.PhysicalDevice)
             {
                 throw std::runtime_error("No physical device found that supports the needed extensions");
             }
@@ -187,7 +188,7 @@ namespace vr
         // Create the logical device
         {
             // Get the queue families
-            auto queueFamilies = mPhysicalDevice.getQueueFamilyProperties();
+            auto queueFamilies = outCtx.PhysicalDevice.getQueueFamilyProperties();
 
             // Find the queue families, if dedicated queues are needed, find the dedicated queues
             uint32_t graphicsIndex = ~0U;
@@ -255,21 +256,23 @@ namespace vr
             }
 
             // Compute queue
-            if (req.DedicatedCompute || req.SeparateComputeTransferQueue)
+            if (computeIndex != graphicsIndex)
             {
                 auto queueCreateInfo = vk::DeviceQueueCreateInfo()
                                            .setQueueFamilyIndex(computeIndex)
                                            .setQueueCount(1)
                                            .setPQueuePriorities(&priority);
+                queueCreateInfos.push_back(queueCreateInfo);
             }
 
             // Transfer queue
-            if (req.DedicatedTransfer || req.SeparateComputeTransferQueue)
+            if (transferIndex != graphicsIndex && transferIndex != computeIndex)
             {
                 auto queueCreateInfo = vk::DeviceQueueCreateInfo()
                                            .setQueueFamilyIndex(transferIndex)
                                            .setQueueCount(1)
                                            .setPQueuePriorities(&priority);
+                queueCreateInfos.push_back(queueCreateInfo);
             }
 
             float queuePriority = 1.0f;
@@ -291,15 +294,42 @@ namespace vr
                     .setEnabledExtensionCount(static_cast<uint32_t>(req.DeviceExtensions.size()))
                     .setPpEnabledExtensionNames(req.DeviceExtensions.data());
 
-            mDevice = mPhysicalDevice.createDevice(logicalDeviceCreateInfo);
+            outCtx.Device = outCtx.PhysicalDevice.createDevice(logicalDeviceCreateInfo);
+
+            // Get the queues
+            outCtx.GraphicsQueue = outCtx.Device.getQueue(graphicsIndex, 0);
+            outCtx.ComputeQueue = outCtx.Device.getQueue(computeIndex, 0);
+            outCtx.TransferQueue = outCtx.Device.getQueue(transferIndex, 0);
         }
+    }
+
+    void DestroyVulkanContext(VulkanContext& context)
+    {
+        if (context.Device)
+        {
+            context.Device.destroy();
+            context.Device = nullptr;
+        }
+
+        if (context.DebugMessenger)
+        {
+            context.Instance.destroyDebugUtilsMessengerEXT(context.DebugMessenger, nullptr, context.DynLoader);
+            context.DebugMessenger = nullptr;
+        }
+
+        if (context.Instance)
+        {
+            context.Instance.destroy();
+            context.Instance = nullptr;
+        }
+    }
+
+    Device::Device(const VulkanContext& context) : mCtx(context)
+    {
     }
 
     Device::~Device()
     {
-        if (mDebugMessenger)
-            mInstance.destroyDebugUtilsMessengerEXT(mDebugMessenger, nullptr, mDynLoader);
-        mInstance.destroy();
     }
 
 } // namespace vr

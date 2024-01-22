@@ -293,10 +293,10 @@ namespace vr
         /// here.
         void* FeatureChain = nullptr;
 
-        /// @brief Dedicated compute queue.
+        /// @brief Bool to indicate if you want a dedicated compute queue.
         bool DedicatedCompute = false;
 
-        /// @brief Dedicated transfer queue.
+        /// @brief Bool to indicate if you want a dedicated transfer queue.
         bool DedicatedTransfer = false;
 
         /// @brief Separate compute and transfer queue from graphics queue. So compute and transfer can be same queue
@@ -305,14 +305,40 @@ namespace vr
         bool SeparateComputeTransferQueue = false;
     };
 
+    /// @brief VulkanContext is a class that encapsulates a vulkan context.
+    struct VulkanContext
+    {
+        vk::Instance Instance = nullptr;
+
+        vk::DebugUtilsMessengerEXT DebugMessenger = nullptr;
+
+        vk::Device Device = nullptr;
+
+        vk::PhysicalDevice PhysicalDevice = nullptr;
+
+        vk::Queue GraphicsQueue = nullptr;
+
+        vk::Queue ComputeQueue = nullptr;
+
+        vk::Queue TransferQueue = nullptr;
+
+        vk::DispatchLoaderDynamic DynLoader = {};
+    };
+
+    /// @brief Create a vulkan context with the given requirements.
+    /// @param req Device requirements.
+    VulkanContext CreateVulkanContext(DeviceRequirements& req);
+
+    /// @brief Destroy a vulkan context.
+    /// @param context Vulkan context.
+    void DestroyVulkanContext(VulkanContext& context);
+
     /// @brief Device is a class that encapsulates a graphics device.
     class Device
     {
     public:
-        /// @brief Constructor. This will attempt to initialize vulkan and pick a suitable device depending on vulray's
-        /// feature requirements.
-        /// @param req Device requirements.
-        Device(DeviceRequirements& req);
+        /// @brief Constructor with a vulkan context.
+        Device(const VulkanContext& ctx);
 
         /// @brief Destructor.
         ~Device();
@@ -326,37 +352,11 @@ namespace vr
         Handle<Swapchain> CreateSwapchain(WindowHandle windowHandle, vk::Extent2D extent, vk::Format format,
                                           vk::PresentModeKHR presentMode = vk::PresentModeKHR::eFifo);
 
-        /// @brief Wait for the device to be idle.
-        void WaitIdle() { mDevice.waitIdle(); }
+        void WaitIdle() { mCtx.Device.waitIdle(); }
 
     private:
-        /// @brief Vulkan instance.
-        vk::Instance mInstance = nullptr;
-
-        /// @brief Vulkan debug messenger.
-        vk::DebugUtilsMessengerEXT mDebugMessenger = nullptr;
-
-        /// @brief Vulkan dispatch loader dynamic.
-        vk::DispatchLoaderDynamic mDynLoader = {};
-
-        /// @brief Logical device.
-        vk::Device mDevice = nullptr;
-
-        /// @brief Physical device.
-        vk::PhysicalDevice mPhysicalDevice = nullptr;
-
-        struct
-        {
-            /// @brief Graphics queue.
-            Handle<CommandQueue> mGraphics = nullptr;
-
-            /// @brief Compute queue.
-            Handle<CommandQueue> mCompute = nullptr;
-
-            /// @brief Transfer queue.
-            Handle<CommandQueue> mTransfer = nullptr;
-
-        } mQueues;
+        /// @brief Vulkan context.
+        VulkanContext mCtx = {};
 
     private:
         /// @brief Check properties of a physical device.

@@ -1,5 +1,13 @@
 #pragma once
 
+// Include standard headers.
+#include <cassert>
+
+// Define the assert macro.
+#define VULRAY_ASSERT(x) assert(x)
+
+// Platform specific includes.
+
 #ifdef _WIN32 // Windows support.
 
 #define VK_USE_PLATFORM_WIN32_KHR
@@ -23,16 +31,11 @@ namespace vr
 #define VULKAN_HPP_NO_NODISCARD_WARNINGS
 #include <vulkan/vulkan.hpp>
 
-// Set the extension for the surface creation function.
-#ifdef _WIN32
+// Include the Vulkan bootstrap header.
+#include <VkBootstrap.h>
 
-#define VULRAY_VULKAN_SURFACE_EXTENSION_NAME "VK_KHR_win32_surface"
-
-#elif __linux__
-
-#define VULRAY_VULKAN_SURFACE_EXTENSION_NAME VK_KHR_XCB_SURFACE_EXTENSION_NAME
-
-#endif // _WIN32
+// Include the Vulkan memory allocator header.
+#include <vk_mem_alloc.h>
 
 namespace vr
 {
@@ -117,9 +120,9 @@ namespace vr
     {
     public:
         /// @brief Constructor.
-        /// @param dev Logical device.
+        /// @param queue Queue.
         /// @param queueType Queue type.
-        CommandQueue(vk::Device dev, vk::QueueFlagBits queueType);
+        CommandQueue(vk::Queue queue, vk::QueueFlags queueType);
 
         /// @brief Destructor.
         ~CommandQueue();
@@ -245,45 +248,74 @@ namespace vr
         vk::Fence mRenderFence = nullptr;
     };
 
+    /// @brief DeviceBuilder is a class that encapsulates a device builder.
+    struct DeviceRequirements
+    {
+        /// @brief Enable validation or not. Enabling this will enable the debug messenger.
+        bool EnableValidation = false;
+
+        /// @brief Enable debug messenger or not.
+        bool EnableDebugMessenger = false;
+
+        /// @brief Message severities to enable.
+        vk::DebugUtilsMessageSeverityFlagsEXT MessageSeverity =
+            vk::DebugUtilsMessageSeverityFlagBitsEXT::eError | vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning |
+            vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo | vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose;
+
+        /// @brief Debug callback.
+        PFN_vkDebugUtilsMessengerCallbackEXT DebugCallback = nullptr;
+
+        /// @brief Debug callback user data.
+        void* DebugCallbackUserData = nullptr;
+
+        /// @brief Instance extensions to enable. All surface extensions are enabled by default.
+        Vector<const char*> InstanceExtensions = {};
+
+        /// @brief Instance layers to enable.
+        Vector<const char*> InstanceLayers = {};
+
+        /// @brief Additional device extensions apart from the required ones of vulray.
+        std::vector<const char*> DeviceExtensions = {};
+
+        /// @brief Vulkan 1.0 features.
+        vk::PhysicalDeviceFeatures PhysicalDeviceFeatures10 = {};
+
+        /// @brief Vulkan 1.1 features.
+        vk::PhysicalDeviceVulkan11Features PhysicalDeviceFeatures11 = {};
+
+        /// @brief Vulkan 1.2 features.
+        vk::PhysicalDeviceVulkan12Features PhysicalDeviceFeatures12 = {};
+
+        /// @brief Vulkan 1.3 features.
+        vk::PhysicalDeviceVulkan13Features PhysicalDeviceFeatures13 = {};
+
+        /// @brief Feature pNext chain. If your own extension requires a feature, you can add the start of the chain
+        /// here.
+        void* FeatureChain = nullptr;
+
+        /// @brief Dedicated compute queue.
+        bool DedicatedCompute = false;
+
+        /// @brief Dedicated transfer queue.
+        bool DedicatedTransfer = false;
+
+        /// @brief Separate compute and transfer queue from graphics queue. So compute and transfer can be same queue
+        /// family, but separate from graphics queue family. Don't combine this with dedicated compute or transfer
+        /// queue. May lead to undefined behavior.
+        bool SeparateComputeTransferQueue = false;
+    };
+
     /// @brief Device is a class that encapsulates a graphics device.
     class Device
     {
     public:
-        /// @brief Constructor.
-        /// @param debugCallback Debug callback function pointer. If this is nullptr, no debug callback will be created
-        /// and debug is disabled.
-        /// @param severity Severity of the debug messages that will be reported.
-        Device(PFN_vkDebugUtilsMessengerCallbackEXT debugCallback = nullptr,
-               vk::DebugUtilsMessageSeverityFlagsEXT severity = vk::DebugUtilsMessageSeverityFlagBitsEXT::eError |
-                                                                vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning |
-                                                                vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose |
-                                                                vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo);
+        /// @brief Constructor. This will attempt to initialize vulkan and pick a suitable device depending on vulray's
+        /// feature requirements.
+        /// @param req Device requirements.
+        Device(DeviceRequirements& req);
 
         /// @brief Destructor.
         ~Device();
-
-        /// @brief Get the logical device.
-        /// @return Logical device.
-        vk::Device GetDevice() const { return mDevice; }
-
-        /// @brief Get the physical device.
-        /// @return Physical device.
-        vk::PhysicalDevice GetPhysicalDevice() const { return mPhysicalDevice; }
-
-        /// @brief Get the graphics queue.
-        /// @return Graphics queue. No matter how many times this function is called, it is guaranteed to return the
-        /// same queue.
-        Handle<CommandQueue> GetGraphicsQueue() const { return mQueues.mGraphics; }
-
-        /// @brief Get the compute queue.
-        /// @return Compute queue. No matter how many times this function is called, it is guaranteed to return the
-        /// same queue.
-        Handle<CommandQueue> GetComputeQueue() const { return mQueues.mCompute; }
-
-        /// @brief Get the transfer queue.
-        /// @return Transfer queue. No matter how many times this function is called, it is guaranteed to return the
-        /// same queue.
-        Handle<CommandQueue> GetTransferQueue() const { return mQueues.mTransfer; }
 
         /// @brief Create a swapchain.
         /// @param windowhHndle Handle to a native window.
@@ -293,6 +325,9 @@ namespace vr
         /// @return Swapchain.
         Handle<Swapchain> CreateSwapchain(WindowHandle windowHandle, vk::Extent2D extent, vk::Format format,
                                           vk::PresentModeKHR presentMode = vk::PresentModeKHR::eFifo);
+
+        /// @brief Wait for the device to be idle.
+        void WaitIdle() { mDevice.waitIdle(); }
 
     private:
         /// @brief Vulkan instance.
@@ -326,8 +361,9 @@ namespace vr
     private:
         /// @brief Check properties of a physical device.
         /// @param physicalDevice Physical device.
+        /// @param extensions Required extensions.
         /// @return True if the physical device is suitable, false otherwise.
-        bool CheckPhysicalDeviceProperties(vk::PhysicalDevice physicalDevice);
+        bool IsPhysicalDeviceCompatible(vk::PhysicalDevice physicalDevice, const Vector<const char*>& extensions);
     };
 
 } // namespace vr

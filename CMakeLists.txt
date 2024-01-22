@@ -48,21 +48,17 @@ target_include_directories("Vulray" PUBLIC
 	"${PROJECT_SOURCE_DIR}/Include/"
 	)
 
-if(VULRAY_BUILD_VULKAN_BUILDER)
-	target_include_directories("Vulray" PRIVATE "${PROJECT_SOURCE_DIR}/Deps/vk-bootstrap/include/")
-endif()
+target_include_directories("Vulray" PRIVATE "${PROJECT_SOURCE_DIR}/Deps/vk-bootstrap/include/")
+
 if(VULRAY_BUILD_DENOISERS)
 	target_include_directories("Vulray" PRIVATE "${PROJECT_SOURCE_DIR}/Shaders/Bin/") # For denoiser shaders
 endif()
 
 # -------------- Link Libraries --------------
 
-if(VULRAY_BUILD_VULKAN_BUILDER)
-	target_link_libraries("Vulray" PRIVATE "vk-bootstrap")
-endif()
-
 target_link_libraries("Vulray" PRIVATE ${Vulkan_LIBRARIES})
 
+target_link_libraries("Vulray" PUBLIC "vk-bootstrap")
 
 set_property(TARGET "Vulray" PROPERTY CXX_STANDARD 20)
 
